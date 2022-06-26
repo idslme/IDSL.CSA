@@ -1,2 +1,2 @@
 # IDSL.CSA
-Composite Spectra Analysis
+Composite Spectra Analyzer
