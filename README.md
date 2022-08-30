@@ -6,4 +6,4 @@
 
 The Composite Spectra Analysis (IDSL.CSA) package was designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and various Data-Independent Acquisition (DIA) methods such as MS<sup>E</sup>, and All-Ion Fragmentation (AIF).
 
-	install.packages("IDSL.CSA") # IDSL.CSA package is set to release on CRAN by the end of August
+	install.packages("IDSL.CSA") # IDSL.CSA package is set to release on CRAN by the end of September
