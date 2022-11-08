@@ -8,7 +8,7 @@
 [![Dependencies](https://tinyverse.netlify.com/badge/IDSL.CSA)](https://cran.r-project.org/package=IDSL.CSA)
 <!-- badges: end -->
 
-[**Composite Spectra Analysis (CSA)**](https://www.csa.idsl.me/) by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/) is an R package designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and various Data-Independent Acquisition (DIA) methods such as MS<sup>E</sup>, and All-Ion Fragmentation (AIF).
+**Composite Spectra Analysis (CSA)** by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/) is an R package designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and various Data-Independent Acquisition (DIA) methods such as MS<sup>E</sup>, and All-Ion Fragmentation (AIF).
 
 	install.packages("IDSL.CSA") # IDSL.CSA package is set to release on CRAN by the end of 2022
 
