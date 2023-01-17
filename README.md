@@ -15,7 +15,7 @@
 - [Features of IDSL.CSA](https://github.com/idslme/IDSL.CSA#features-of-idslcsa)
 - [Installation](https://github.com/idslme/IDSL.CSA#installation)
 - [Workflow](https://github.com/idslme/IDSL.CSA#workflow)
-- [Simple Batch Example](https://github.com/idslme/IDSL.CSA#simple-batch-example)
+- [Quick Batch Example](https://github.com/idslme/IDSL.CSA#quick-batch-example)
 - [Wiki](https://github.com/idslme/IDSL.CSA#wiki)
 - [Citation](https://github.com/idslme/IDSL.CSA#citation)
 
@@ -67,6 +67,7 @@ Follow these steps for a quick case study (n=33) [ST002263](https://www.metabolo
 2. [**DDA analysis by IDSL.CSA**](https://github.com/idslme/IDSL.CSA/wiki/DDA-analysis-by-IDSL.CSA)
 3. [**DIA analysis by IDSL.CSA**](https://github.com/idslme/IDSL.CSA/wiki/DIA-analysis-by-IDSL.CSA)
 4. [**unique spectra aggregation**](https://github.com/idslme/IDSL.CSA/wiki/Unique-spectra-aggregation)
+5. [**Aligned CSA spectra aggregation**](https://github.com/idslme/IDSL.CSA/wiki/Aligned-CSA-spectra-aggregation)
 
 ## Citation
 
