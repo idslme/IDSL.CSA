@@ -23,7 +23,7 @@
 
 1) Parameter selection through a well-described [parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx)
 2) Process high-throughput and population size studies (n > 500)
-3) Generating pairwise correlations list for aligned peak height and its gap-filled tables to detect potential recurring adducts, in-source products and fragment peaks
+3) Generating pairwise correlations list for aligned peak height to detect potential recurring adducts, in-source products and fragment peaks
 4) Compatibility with parallel processing in Windows and Linux environments
 
 ## Installation
@@ -43,9 +43,9 @@ Follow these steps for a quick case study (n=33) [ST002263](https://www.metabolo
 
 1. Process raw mass spectrometry data and chromatographic information using the method described by [IDSL.IPA](https://github.com/idslme/IDSL.IPA#quick-batch-example)
 
-2. IDSL.CSA requires 39 parameters distributed into 5 separate sections. For this study, use default parameter values presented in the [CSA parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx). Next, Provide address for 
+2. IDSL.CSA requires 39 parameters distributed into 5 separate sections for a full scale analysis. For this study, use default parameter values presented in the [CSA parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx). Next, provide information for 
 	
-	2.1. Select **YES** for **PARAM0001** in the `Start` tab
+	2.1. Select **YES** for **PARAM0001** in the `Start` tab to only process **CSA** workflow.
 	
 	2.2. **CSA0005** for *HRMS data location address (MS1 level HRMS data)*
 	
@@ -57,7 +57,12 @@ Follow these steps for a quick case study (n=33) [ST002263](https://www.metabolo
 	
 	2.6. You may also increase the number of processing threads using **CSA0004** according to your computational power
 
-3. Run this command in R/Rstudio console or terminal: `IDSL.CSA::CSA_workflow("Address of the CSA parameter spreadsheet")`
+3. Run this command in R/Rstudio console or terminal:
+
+```
+library(IDSL.CSA)
+IDSL.CSA_workflow("Address of the CSA parameter spreadsheet")
+```
 
 4. You may parse the results at the address you provided for **CSA0011**.
 
@@ -66,7 +71,7 @@ Follow these steps for a quick case study (n=33) [ST002263](https://www.metabolo
 1. [**CSA analysis by IDSL.CSA**](https://github.com/idslme/IDSL.CSA/wiki/CSA-analysis-by-IDSL.CSA)
 2. [**DDA analysis by IDSL.CSA**](https://github.com/idslme/IDSL.CSA/wiki/DDA-analysis-by-IDSL.CSA)
 3. [**DIA analysis by IDSL.CSA**](https://github.com/idslme/IDSL.CSA/wiki/DIA-analysis-by-IDSL.CSA)
-4. [**unique spectra aggregation**](https://github.com/idslme/IDSL.CSA/wiki/Unique-spectra-aggregation)
+4. [**Unique spectra aggregation**](https://github.com/idslme/IDSL.CSA/wiki/Unique-spectra-aggregation)
 5. [**Aligned CSA spectra aggregation**](https://github.com/idslme/IDSL.CSA/wiki/Aligned-CSA-spectra-aggregation)
 
 ## Citation
