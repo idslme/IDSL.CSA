@@ -43,7 +43,7 @@ Follow these steps for a quick case study (n=33) [ST002263](https://www.metabolo
 
 1. Process raw mass spectrometry data and chromatographic information using the method described by [IDSL.IPA](https://github.com/idslme/IDSL.IPA#quick-batch-example)
 
-2. IDSL.CSA requires 39 parameters distributed into 5 separate sections for a full scale analysis. For this study, use default parameter values presented in the [CSA parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx). Next, provide information for 
+2. The **Composite Spectra Analysis** requires 39 parameters distributed into 5 separate sections for a full scale analysis. For this study, use default parameter values presented in the [CSA parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx). Next, provide information for 
 	
 	2.1. Select **YES** for **PARAM0001** in the `Start` tab to only process **CSA** workflow.
 	
@@ -65,6 +65,14 @@ IDSL.CSA_workflow("Address of the CSA parameter spreadsheet")
 ```
 
 4. You may parse the results at the address you provided for **CSA0011**.
+	
+	4.1. *CSA_MSP* includes ***.msp*** file
+	
+	4.2. *CSA_adduct_annotation* includes peaklists with potential adduct information
+	
+	4.3. *peak_alignment_subset* includes subsets of aligned peak tables for the major ions in each CSA cluster
+	
+	4.4. *aligned_spectra_table* includes information for the CSA aggregation on the aligned table
 
 ## [**Wiki**](https://github.com/idslme/IDSL.CSA/wiki)
 
