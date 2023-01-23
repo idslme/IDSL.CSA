@@ -8,7 +8,7 @@
 [![Dependencies](https://tinyverse.netlify.com/badge/IDSL.CSA)](https://cran.r-project.org/package=IDSL.CSA)
 <!-- badges: end -->
 
-**Composite Spectra Analysis (CSA)** by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/) is an R package designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and various Data-Independent Acquisition (DIA) methods such as MS<sup>E</sup>, and All-Ion Fragmentation (AIF).
+**Composite Spectra Analysis (CSA)** by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/) is an R package designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and various Data-Independent Acquisition (DIA) methods such as MS^E, All-Ion Fragmentation (AIF) and SWATH analysis.
 
 ## Table of Contents
 
@@ -21,10 +21,10 @@
 
 ## Features of IDSL.CSA
 
-1) Parameter selection through a well-described [parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx)
-2) Process high-throughput and population size studies (n > 500)
+1) Parameter selection through a user-friendly and well-described [parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx)
+2) Analyzing population size untargeted studies (n > 500)
 3) Generating pairwise correlations list for aligned peak height to detect potential recurring adducts, in-source products and fragment peaks
-4) Compatibility with parallel processing in Windows and Linux environments
+4) Parallel processing in Windows and Linux environments
 
 ## Installation
 
