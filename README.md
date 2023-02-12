@@ -83,7 +83,6 @@ IDSL.CSA_workflow("Address of the CSA parameter spreadsheet")
 2. [**DDA analysis by IDSL.CSA**](https://github.com/idslme/IDSL.CSA/wiki/DDA-analysis-by-IDSL.CSA)
 3. [**DIA analysis by IDSL.CSA**](https://github.com/idslme/IDSL.CSA/wiki/DIA-analysis-by-IDSL.CSA)
 4. [**Unique spectra aggregation**](https://github.com/idslme/IDSL.CSA/wiki/Unique-spectra-aggregation)
-5. [**Aligned CSA spectra aggregation**](https://github.com/idslme/IDSL.CSA/wiki/Aligned-CSA-spectra-aggregation)
 
 ## Citation
 
