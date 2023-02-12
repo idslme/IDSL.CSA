@@ -8,7 +8,7 @@
 [![Dependencies](https://tinyverse.netlify.com/badge/IDSL.CSA)](https://cran.r-project.org/package=IDSL.CSA)
 <!-- badges: end -->
 
-**Composite Spectra Analysis (CSA)** by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/) is an R package designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and SWATH-MS and AIF Data-Independent Acquisition (DIA) methods such as MS<sup>E</sup>, All-Ion Fragmentation (AIF) and SWATH analysis.
+The **Composite Spectra Analysis (IDSL.CSA)** R package for the analysis of mass spectrometry data has been developed by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/). This package can be used for the deconvolution of fragmentation spectra obtained through various analytical methods such as MS1-only Composite Spectra deconvolution Analysis (**CSA**), Data Dependent Acquisition (**DDA**), and a various Data-Independent Acquisition (**DIA**) methods including MS<sup>E</sup>, All-Ion Fragmentation (AIF), and SWATH-MS analyses. The aim of the **IDSL.CSA** package is to assist in streamlining the data analysis process and improving the overall chemical structure annotation in the fields of metabolomics and exposomics.
 
 ## Table of Contents
 
@@ -24,7 +24,10 @@
 1) Parameter selection through a user-friendly and well-described [parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx)
 2) Peak detection and chromatogram deconvolution for various fragmentation data analyses including [Composite Spectra Analysis (CSA)](https://github.com/idslme/IDSL.CSA/wiki/CSA-analysis-by-IDSL.CSA), [Data Dependent Acquisition (DDA)](https://github.com/idslme/IDSL.CSA/wiki/DDA-analysis-by-IDSL.CSA), and [Data-Independent Acquisition (DIA)](https://github.com/idslme/IDSL.CSA/wiki/DIA-analysis-by-IDSL.CSA)
 3) Analyzing population size untargeted studies (n > 500)
-4) Parallel processing in Windows and Linux environments
+4) Aggregating annotated chemical structures on the aligned peak table using 47 meta-variables such as InChIKey, SMILES, precursor type, molecular formula,... depending on the information in the reference library. This is a very unique feature that is only presented by IDSL.CSA. To familiarize with this statistical mass spectrometry feature, try **PARAM0006** in the `Start` tab in the [CSA parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx)
+5) Generating batch untargeted aligned extracted ion chromatograms (EIC) figures for the DIA and CSA analyses in addition to generating batch DDA spectra figures.
+6) Parallel processing in Windows and Linux environments
+7) Integration with [IDSL.FSA](https://github.com/idslme/IDSL.FSA) workflow to annotate various types of MSP files and generating fragmentation libraries.
 
 ## Installation
 
