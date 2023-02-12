@@ -8,7 +8,7 @@
 [![Dependencies](https://tinyverse.netlify.com/badge/IDSL.CSA)](https://cran.r-project.org/package=IDSL.CSA)
 <!-- badges: end -->
 
-**Composite Spectra Analysis (CSA)** by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/) is an R package designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and various Data-Independent Acquisition (DIA) methods such as MS^E, All-Ion Fragmentation (AIF) and SWATH analysis.
+**Composite Spectra Analysis (CSA)** by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/) is an R package designed to deconvolute fragmentation spectra from Composite Spectra Analysis (CSA), Data Dependent Acquisition (DDA), and SWATH-MS and AIF Data-Independent Acquisition (DIA) methods such as MS<sup>E</sup>, All-Ion Fragmentation (AIF) and SWATH analysis.
 
 ## Table of Contents
 
@@ -22,8 +22,8 @@
 ## Features of IDSL.CSA
 
 1) Parameter selection through a user-friendly and well-described [parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx)
-2) Analyzing population size untargeted studies (n > 500)
-3) Generating pairwise correlations list for aligned peak height to detect potential recurring adducts, in-source products and fragment peaks
+2) Peak detection and chromatogram deconvolution for various fragmentation data analyses including [Composite Spectra Analysis (CSA)](https://github.com/idslme/IDSL.CSA/wiki/CSA-analysis-by-IDSL.CSA), [Data Dependent Acquisition (DDA)](https://github.com/idslme/IDSL.CSA/wiki/DDA-analysis-by-IDSL.CSA), and [Data-Independent Acquisition (DIA)](https://github.com/idslme/IDSL.CSA/wiki/DIA-analysis-by-IDSL.CSA)
+3) Analyzing population size untargeted studies (n > 500)
 4) Parallel processing in Windows and Linux environments
 
 ## Installation
@@ -41,7 +41,7 @@ Prior to processing your mass spectrometry data (**mzXML**, **mzML**, **netCDF**
 
 Follow these steps for a quick case study (n = 33) [ST002263](https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?Mode=Study&StudyID=ST002263&DataMode=AllData&ResultType=1) which has Thermo Q Exactive HF hybrid Orbitrap data collected in the HILIC-ESI-POS/NEG modes. 
 
-1. Process raw mass spectrometry data and chromatographic information using the method described by [IDSL.IPA](https://github.com/idslme/IDSL.IPA#quick-batch-example)
+1. Process raw mass spectrometry data and chromatographic information using the method described for [IDSL.IPA](https://github.com/idslme/IDSL.IPA#quick-batch-example)
 
 2. The **Composite Spectra Analysis** requires 39 parameters distributed into 5 separate sections for a full scale analysis. For this study, use default parameter values presented in the [CSA parameter spreadsheet](https://raw.githubusercontent.com/idslme/IDSL.CSA/main/CSA_parameters.xlsx). Next, provide information for 
 	
@@ -84,4 +84,6 @@ IDSL.CSA_workflow("Address of the CSA parameter spreadsheet")
 
 ## Citation
 
-pending...
+[1] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL.CSA: Composite Spectra Analysis for Chemical Annotation of Untargeted Metabolomics Datasets](https://doi.org/10.1101/2023.02.09.527886). *bioRxiv*, **2023**.
+
+[2] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL. IPA characterizes the organic chemical space in untargeted LC/HRMS datasets](https://pubs.acs.org/doi/10.1021/acs.jproteome.2c00120). *Journal of proteome research*, **2022**, *21(6)*, 1485-1494.
