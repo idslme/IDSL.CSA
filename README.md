@@ -10,6 +10,8 @@
 
 The **Composite Spectra Analysis (IDSL.CSA)** R package for the analysis of mass spectrometry data has been developed by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/). This package can be used for the deconvolution of fragmentation spectra obtained through various analytical methods such as MS1-only Composite Spectra deconvolution Analysis (**CSA**), Data Dependent Acquisition (**DDA**), and a various Data-Independent Acquisition (**DIA**) methods including MS<sup>E</sup>, All-Ion Fragmentation (AIF), and SWATH-MS analyses. The aim of the **IDSL.CSA** package is to assist in streamlining the data analysis process and improving the overall chemical structure annotation in the fields of metabolomics and exposomics.
 
+## <img src='CSA_educational_files/Figures/IDSL.CSA-TOC_Art.png' align="right" />
+
 ## Table of Contents
 
 - [Features of IDSL.CSA](https://github.com/idslme/IDSL.CSA#features-of-idslcsa)
