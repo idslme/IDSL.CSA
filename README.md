@@ -12,6 +12,7 @@ The **Composite Spectra Analysis (IDSL.CSA)** R package for the analysis of mass
 
 ## <img src='CSA_educational_files/Figures/IDSL.CSA-TOC_Art.png' align="right" />
 
+
 ## Table of Contents
 
 - [Features of IDSL.CSA](https://github.com/idslme/IDSL.CSA#features-of-idslcsa)
