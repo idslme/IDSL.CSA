@@ -14,7 +14,6 @@ CSA_workflow <- function(PARAM_CSA) {
   ##
   output_address <- PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0011'), 2]
   FSA_dir.create(output_address, allowedUnlink = FALSE)
-  opendir(output_address)
   ##
   ##############################################################################
   ## To create log record for IDSL.CSA
@@ -88,8 +87,6 @@ CSA_workflow <- function(PARAM_CSA) {
   ##
   ##############################################################################
   ##
-  IDSL.IPA::opendir(output_CSA_MSP)
-  ##
   LHRMS <- length(file_name_hrms)
   if (LHRMS == 0) {
     stop(FSA_logRecorder("EMPTY HRMS FOLDER!!!"))
@@ -124,7 +121,6 @@ CSA_workflow <- function(PARAM_CSA) {
       ##
       output_CSA_EICs_folder <- paste0(output_address, "/CSA_EICs")
       FSA_dir.create(output_CSA_EICs_folder, allowedUnlink = FALSE)
-      opendir(output_CSA_EICs_folder)
       FSA_logRecorder("Aligned extracted ion chromatogram (EIC) figures for deconvoluted ions are stored in the `CSA_EICs` folder!")
       ##
     } else {
@@ -482,7 +478,6 @@ CSA_workflow <- function(PARAM_CSA) {
       ##
       output_path_aligned_table <- paste0(output_address, "/aligned_spectra_table")
       FSA_dir.create(output_path_aligned_table, allowedUnlink = FALSE)
-      opendir(output_path_aligned_table)
       ##    
       save(CSA_aligned_table, file = paste0(output_path_aligned_table, "/CSA_aligned_table.Rdata"))
       write.csv(CSA_aligned_table, file = paste0(output_path_aligned_table, "/CSA_aligned_table.csv"), row.names = TRUE)
