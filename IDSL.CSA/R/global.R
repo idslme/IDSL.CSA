@@ -1,1 +1,1 @@
-utils::globalVariables(c("i", "MetaVariable1"))
+utils::globalVariables(c("MetaVariable1"))

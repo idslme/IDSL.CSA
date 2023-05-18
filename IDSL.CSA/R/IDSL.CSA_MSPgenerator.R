@@ -103,7 +103,18 @@ IDSL.CSA_MSPgenerator <- function(CSA_peaklist, msLevel, spectral_search_mode = 
     ##
     osType <- Sys.info()[['sysname']]
     ##
-    if (osType == "Linux") {
+    if (osType == "Windows") {
+      ##
+      clust <- makeCluster(number_processing_threads)
+      clusterExport(clust, setdiff(ls(), c("clust")), envir = environment())
+      ##
+      MSPvector <- do.call(c, parLapply(clust, 1:(length(x_diffID) - 1), function(i) {
+        call_MSPvector(i)
+      }))
+      ##
+      stopCluster(clust)
+      ##
+    } else {
       ##
       MSPvector <- do.call(c, mclapply(1:(length(x_diffID) - 1), function(i) {
         call_MSPvector(i)
@@ -111,16 +122,6 @@ IDSL.CSA_MSPgenerator <- function(CSA_peaklist, msLevel, spectral_search_mode = 
       ##
       closeAllConnections()
       ##
-    } else if (osType == "Windows") {
-      ##
-      clust <- makeCluster(number_processing_threads)
-      registerDoParallel(clust)
-      ##
-      MSPvector <- foreach(i = 1:(length(x_diffID) - 1), .combine = 'c', .verbose = FALSE) %dopar% {
-        call_MSPvector(i)
-      }
-      ##
-      stopCluster(clust)
     }
   }
   ##

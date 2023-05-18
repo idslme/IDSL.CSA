@@ -7,6 +7,7 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
   .logFSA <- NULL
   .logFSA <<- paste0(output_path, "/logCSA_AlignedTable.txt")
   FSA_logRecorder(paste0(rep("", 100), collapse = "="))
+  FSA_logRecorder("Type <<< citation('IDSL.CSA') >>> for citing this R package in publications.")
   FSA_logRecorder(paste0("OUTPUT:  ", output_path))
   FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
   FSA_logRecorder("Initiated generating the aligned spectra annotated table!")
@@ -81,6 +82,14 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
       matchedMetaVariable1 <- SpectraAnnotationTable$MetaVariable1str
       if (is.null(matchedMetaVariable1)) {
         matchedMetaVariable1 <- rep('', dim(SpectraAnnotationTable)[1])
+      } else if (allowedInChIkey14) {
+        matchedMetaVariable1 <- do.call(c, lapply(matchedMetaVariable1 , function(inchikey) {
+          if (grepl('-', inchikey)) {
+            strsplit(inchikey, '-')[[1]][1]
+          } else {
+            inchikey
+          }
+        }))
       }
       ##
       matchedMetaVariable2 <- SpectraAnnotationTable$MetaVariable2str
@@ -118,8 +127,18 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
   SAnT <- IDSL.IPA::loadRdata(paste0(output_path_annotated_spectra_tables, '/', spectra_table_list[iRandomNumber]))
   colSAnT <- colnames(SAnT)
   ##
-  Meta1Variable <- PARAM_AT[which(PARAM_AT[, 1] == 'AT0007'), 2]
+  ##############################################################################
+  ##
+  Meta1Variable <- gsub(" ", "", PARAM_AT[which(PARAM_AT[, 1] == 'AT0007'), 2])
   Meta1Variable <- gsub("^FSDB_", "", Meta1Variable, ignore.case = TRUE)
+  ##
+  if (tolower(Meta1Variable) == "inchikey14") {
+    Meta1Variable = "inchikey"
+    allowedInChIkey14 <- TRUE
+  } else {
+    allowedInChIkey14 <- FALSE
+  }
+  ##
   if (tolower(Meta1Variable) == "id") {
     MetaVariable1str <- "IDSL.FSA_FSDBreferenceID"
     Meta1Variable <- "IDSL.FSA_FSDBreferenceID"
@@ -133,7 +152,9 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
   }
   call_Rank_Zcol <- gsub("MetaVariable1str", MetaVariable1str, call_Rank_Zcol)
   ##
-  Meta2Variable <- PARAM_AT[which(PARAM_AT[, 1] == 'AT0008'), 2]
+  ##############################################################################
+  ##
+  Meta2Variable <- gsub(" ", "", PARAM_AT[which(PARAM_AT[, 1] == 'AT0008'), 2])
   Meta2Variable <- gsub("^FSDB_", "", Meta2Variable, ignore.case = TRUE)
   MetaVariable2str <- paste0("FSDB_", tolower(Meta2Variable))
   if (length(which(colSAnT == MetaVariable2str)) == 0) {
@@ -143,7 +164,9 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
   }
   call_Rank_Zcol <- gsub("MetaVariable2str", MetaVariable2str, call_Rank_Zcol)
   ##
-  Meta3Variable <- PARAM_AT[which(PARAM_AT[, 1] == 'AT0009'), 2]
+  ##############################################################################
+  ##
+  Meta3Variable <- gsub(" ", "", PARAM_AT[which(PARAM_AT[, 1] == 'AT0009'), 2])
   Meta3Variable <- gsub("^FSDB_", "", Meta3Variable, ignore.case = TRUE)
   MetaVariable3str <- paste0("FSDB_", tolower(Meta3Variable))
   if (length(which(colSAnT == MetaVariable3str)) == 0) {
@@ -156,6 +179,77 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
   eval(parse(text = call_Rank_Zcol))
   ##
   ##############################################################################
+  ##
+  FSA_logRecorder("Initiated matching peak IDs!")
+  if (number_processing_threads == 1) {
+    ##
+    progressBARboundaries <- txtProgressBar(min = 0, max = Lsamples, initial = 0, style = 3)
+    ##
+    Rank_Zcol <- do.call(rbind, lapply(seqSample, function(i) {
+      setTxtProgressBar(progressBARboundaries, i)
+      ##
+      call_Rank_Zcol(i)
+    }))
+    ##
+    close(progressBARboundaries)
+    ##
+    ############################################################################
+    ##
+  } else {
+    ##
+    osType <- Sys.info()[['sysname']]
+    ##
+    ############################################################################
+    ##
+    if (osType == "Windows") {
+      ####
+      clust <- makeCluster(number_processing_threads)
+      clusterExport(clust, setdiff(ls(), c("clust", "seqSample")), envir = environment())
+      ##
+      Rank_Zcol <- do.call(rbind, parLapply(clust, seqSample, function(i) {
+        call_Rank_Zcol(i)
+      }))
+      ##
+      stopCluster(clust)
+      ##
+      ##########################################################################
+      ##
+    } else {
+      ##
+      Rank_Zcol <- do.call(rbind, mclapply(seqSample, function(i) {
+        call_Rank_Zcol(i)
+      }, mc.cores = number_processing_threads))
+      ##
+      closeAllConnections()
+      ##
+      ##########################################################################
+      ##
+    }
+  }
+  ##
+  call_Rank_Zcol <- NULL
+  ##
+  FSA_logRecorder("Completed matching peak IDs!")
+  ##
+  ##############################################################################
+  ##
+  Rank_Zcol <- data.frame(Rank_Zcol)
+  colnames(Rank_Zcol) <- c("XID", "Rank", "MetaVariable1", "MetaVariable2", "MetaVariable3")
+  Rank_Zcol$XID <- as.numeric(Rank_Zcol$XID)
+  Rank_Zcol$Rank <- as.numeric(Rank_Zcol$Rank)
+  Rank_Zcol <- Rank_Zcol[order(Rank_Zcol[, 1], decreasing = FALSE), ]
+  rownames(Rank_Zcol) <- NULL
+  xDiff <- which(diff(Rank_Zcol[, 1]) > 0)
+  ##
+  xZcol <- matrix(rep(0, 2*L_peaks), ncol = 2)
+  ##
+  u_peakid <- unique(Rank_Zcol[, 1])
+  xZcol[u_peakid, 1] <- c(1, (xDiff + 1))
+  xZcol[u_peakid, 2] <- c(xDiff, dim(Rank_Zcol)[1])
+  ##
+  ##############################################################################
+  ##
+  FSA_logRecorder("Initiated calculating median ranks!")
   ##
   rep3NA00Ncandidate <- rep(c(NA, NA, NA, 0, 0), Ncandidate)
   ##
@@ -212,130 +306,65 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
   ##
   if (number_processing_threads == 1) {
     ##
-    FSA_logRecorder("Initiated matching peak IDs!")
-    progressBARboundaries <- txtProgressBar(min = 0, max = Lsamples, initial = 0, style = 3)
-    #
-    Rank_Zcol <- do.call(rbind, lapply(seqSample, function(i) {
-      setTxtProgressBar(progressBARboundaries, i)
-      #
-      call_Rank_Zcol(i)
-    }))
-    close(progressBARboundaries)
-    #
-    Rank_Zcol <- data.frame(Rank_Zcol)
-    colnames(Rank_Zcol) <- c("XID", "Rank", "MetaVariable1", "MetaVariable2", "MetaVariable3")
-    Rank_Zcol$XID <- as.numeric(Rank_Zcol$XID)
-    Rank_Zcol$Rank <- as.numeric(Rank_Zcol$Rank)
-    Rank_Zcol <- Rank_Zcol[order(Rank_Zcol[, 1], decreasing = FALSE), ]
-    rownames(Rank_Zcol) <- NULL
-    xDiff <- which(diff(Rank_Zcol[, 1]) > 0)
-    #
-    xZcol <- matrix(rep(0, 2*L_peaks), ncol = 2)
-    #
-    u_peakid <- unique(Rank_Zcol[, 1])
-    xZcol[u_peakid, 1] <- c(1, (xDiff + 1))
-    xZcol[u_peakid, 2] <- c(xDiff, dim(Rank_Zcol)[1])
-    #
-    FSA_logRecorder("Completed matching peak IDs!")
-    ##
-    FSA_logRecorder("Initiated calculating median ranks!")
     progressBARboundaries <- txtProgressBar(min = 0, max = L_peaks, initial = 0, style = 3)
-    #
+    ##
     aligned_spectra <- do.call(rbind, lapply(1:L_peaks, function(i) {
       setTxtProgressBar(progressBARboundaries, i)
-      #
+      ##
       call_calculating_median_ranks(i)
     }))
-    close(progressBARboundaries)
-    Rank_Zcol <- NULL
-    FSA_logRecorder("Completed calculating median ranks!")
     ##
-    title_mat <- do.call(c, lapply(1:Ncandidate, function(i) {
-      c(paste0(Meta1Variable, "_", i), paste0(Meta2Variable, "_", i), paste0(Meta3Variable, "_", i), paste0("Frequency_", i), paste0("MedianRank_", i))
-    }))
+    close(progressBARboundaries)
+    ##
+    ############################################################################
     ##
   } else {
-    osType <- Sys.info()[['sysname']]
     ##
-    if (osType == "Linux") {
+    ############################################################################
+    ##
+    if (osType == "Windows") {
       ##
-      FSA_logRecorder("Initiated matching peak IDs!")
-      Rank_Zcol <- do.call(rbind, mclapply(seqSample, function(i) {
-        call_Rank_Zcol(i)
-      }, mc.cores = number_processing_threads))
-      #
-      Rank_Zcol <- data.frame(Rank_Zcol)
-      colnames(Rank_Zcol) <- c("XID", "Rank", "MetaVariable1", "MetaVariable2", "MetaVariable3")
-      Rank_Zcol$XID <- as.numeric(Rank_Zcol$XID)
-      Rank_Zcol$Rank <- as.numeric(Rank_Zcol$Rank)
-      Rank_Zcol <- Rank_Zcol[order(Rank_Zcol[, 1], decreasing = FALSE), ]
-      rownames(Rank_Zcol) <- NULL
-      xDiff <- which(diff(Rank_Zcol[, 1]) > 0)
-      #
-      xZcol <- matrix(rep(0, 2*L_peaks), ncol = 2)
-      #
-      u_peakid <- unique(Rank_Zcol[, 1])
-      xZcol[u_peakid, 1] <- c(1, (xDiff + 1))
-      xZcol[u_peakid, 2] <- c(xDiff, dim(Rank_Zcol)[1])
-      #
-      FSA_logRecorder("Completed matching peak IDs!")
+      ##########################################################################
+      ####
+      clust <- makeCluster(number_processing_threads)
+      clusterExport(clust, setdiff(ls(), c("clust", "peakXcol", "L_peaks", "seqSample")), envir = environment())
       ##
-      FSA_logRecorder("Initiated calculating median ranks!")
+      aligned_spectra <- do.call(rbind, parLapply(clust, 1:L_peaks, function(i) {
+        call_calculating_median_ranks(i)
+      }))
+      ##
+      stopCluster(clust)
+      ##
+      ##########################################################################
+      ##
+    } else {
+      ##
       aligned_spectra <- do.call(rbind, mclapply(1:L_peaks, function(i) {
         call_calculating_median_ranks(i)
-      }, mc.cores = number_processing_threads))
-      Rank_Zcol <- NULL
-      FSA_logRecorder("Completed calculating median ranks!")
-      ##
-      title_mat <- do.call(c, mclapply(1:Ncandidate, function(i) {
-        c(paste0(Meta1Variable, "_", i), paste0(Meta2Variable, "_", i), paste0(Meta3Variable, "_", i), paste0("Frequency_", i), paste0("MedianRank_", i))
       }, mc.cores = number_processing_threads))
       ##
       closeAllConnections()
       ##
-    } else if (osType == "Windows") {
-      clust <- makeCluster(number_processing_threads)
-      registerDoParallel(clust)
+      ##########################################################################
       ##
-      ##
-      FSA_logRecorder("Initiated matching peak IDs!")
-      Rank_Zcol <- foreach(i = seqSample, .combine = 'rbind', .verbose = FALSE) %dopar% {
-        call_Rank_Zcol(i)
-      }
-      #
-      Rank_Zcol <- data.frame(Rank_Zcol)
-      colnames(Rank_Zcol) <- c("XID", "Rank", "MetaVariable1", "MetaVariable2", "MetaVariable3")
-      Rank_Zcol$XID <- as.numeric(Rank_Zcol$XID)
-      Rank_Zcol$Rank <- as.numeric(Rank_Zcol$Rank)
-      Rank_Zcol <- Rank_Zcol[order(Rank_Zcol[, 1], decreasing = FALSE), ]
-      rownames(Rank_Zcol) <- NULL
-      xDiff <- which(diff(Rank_Zcol[, 1]) > 0)
-      #
-      xZcol <- matrix(rep(0, 2*L_peaks), ncol = 2)
-      #
-      u_peakid <- unique(Rank_Zcol[, 1])
-      xZcol[u_peakid, 1] <- c(1, (xDiff + 1))
-      xZcol[u_peakid, 2] <- c(xDiff, dim(Rank_Zcol)[1])
-      #
-      FSA_logRecorder("Completed matching peak IDs!")
-      ##
-      FSA_logRecorder("Initiated calculating median ranks!")
-      aligned_spectra <- foreach(i = 1:L_peaks, .combine = 'rbind', .verbose = FALSE) %dopar% {
-        call_calculating_median_ranks(i)
-      }
-      Rank_Zcol <- NULL
-      FSA_logRecorder("Completed calculating median ranks!")
-      ##
-      FSA_logRecorder("Initiated processing the peak property table!")
-      ##
-      title_mat <- foreach(i = 1:Ncandidate, .combine = 'c', .verbose = FALSE) %dopar% {
-        c(paste0(Meta1Variable, "_", i), paste0(Meta2Variable, "_", i), paste0(Meta3Variable, "_", i), paste0("Frequency_", i), paste0("MedianRank_", i))
-      }
-      ##
-      stopCluster(clust)
     }
   }
+  ##
   ##############################################################################
+  ##
+  Rank_Zcol <- NULL
+  FSA_logRecorder("Completed calculating median ranks!")
+  ##
+  if (allowedInChIkey14) {
+    Meta1Variable <- "InChIKey14"
+  }
+  ##
+  title_mat <- do.call(c, lapply(1:Ncandidate, function(i) {
+    c(paste0(Meta1Variable, "_", i), paste0(Meta2Variable, "_", i), paste0(Meta3Variable, "_", i), paste0("Frequency_", i), paste0("MedianRank_", i))
+  }))
+  ##
+  ##############################################################################
+  ##
   FSA_logRecorder(paste0("Initiated grouping compounds with similar `", Meta1Variable, "` on the first hit of the aligned MS/MS table annotation!"))
   ##
   medianPeakHeight <- IDSL.IPA::loadRdata(paste0(peak_alignment_folder, "/peak_height.Rdata"))[, 4:5]
@@ -351,6 +380,7 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
   #
   uMetaVariable1RT <- unique(MetaVariable1RT[, 2])
   uMetaVariable1RT <- setdiff(uMetaVariable1RT, NA)
+  uMetaVariable1RT <- setdiff(uMetaVariable1RT, "")
   #
   LuMetaVariable1RT <- length(uMetaVariable1RT)
   if (LuMetaVariable1RT > 0) {
@@ -375,7 +405,7 @@ aligned_fragmentation_spectra_annotator <- function(PARAM_AT, output_path) {
     groupMetaVariable1RT <- matrix(groupMetaVariable1RT[order(groupMetaVariable1RT[, 2]), ], ncol = 2)
     close(progressBARboundaries)
   }
-  #
+  ##
   groupMetaVariable1RT <- matrix(groupMetaVariable1RT[, 1], ncol = 1)
   namesGroupMetaVariable1RT <- paste0("Group_", Meta1Variable, "_number")
   FSA_logRecorder(paste0("Completed grouping compounds with similar `", Meta1Variable, "` on the first hit of the aligned MS/MS table annotation!"))

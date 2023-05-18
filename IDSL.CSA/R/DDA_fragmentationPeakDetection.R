@@ -47,8 +47,8 @@ DDA_fragmentationPeakDetection <- function(DDA_hrms_address, DDA_hrms_file, peak
     ##
     precursorMZ <- as.matrix(scanTable$precursorMZ)
     ############################################################################
-    ScanNumberStartPL <- x_MS1[peaklist[, 1]]
-    ScanNumberEndPL <- x_MS1[peaklist[, 2]]
+    scanNumberStartPL <- x_MS1[peaklist[, 1]]
+    scanNumberEndPL <- x_MS1[peaklist[, 2]]
     mz_MS1 <- peaklist[, 8]
     RT_MS1 <- peaklist[, 3]
     Int_MS1 <- peaklist[, 4]
@@ -56,7 +56,7 @@ DDA_fragmentationPeakDetection <- function(DDA_hrms_address, DDA_hrms_file, peak
     call_DDA_peaklist <- function(i) {
       DDA_list <- NULL
       ##
-      x_pl_MS2 <- x_MS2[x_MS2 %in% ((ScanNumberStartPL[i] + 1):(ScanNumberEndPL[i] - 1))]
+      x_pl_MS2 <- x_MS2[x_MS2 %in% ((scanNumberStartPL[i] + 1):(scanNumberEndPL[i] - 1))]
       ##
       x_precursor_MS2 <- which(abs(precursorMZ[x_pl_MS2] - mz_MS1[i]) <= massErrorPrecursor)
       L_x_precursor_MS2 <- length(x_precursor_MS2)
@@ -120,7 +120,7 @@ DDA_fragmentationPeakDetection <- function(DDA_hrms_address, DDA_hrms_file, peak
             ##
             plot(DDA_spectra[, 1], DDA_spectra[, 2], type = "h", ylim = c(0, 1.1*max_int), yaxs = "i", lwd = 2, cex = 4, xlab = "m/z", ylab = "Intensity")
             text(x = DDA_spectra[, 1], y = (DDA_spectra[, 2] + nudge_y), label = plotlabelsMZ, col = "red")
-            mtext(DDA_hrms_file, side = 3, adj = 0, line = 0.25, cex = 1.4)
+            mtext(DDA_hrms_file, side = 3, adj = 0, line = 0.25, cex = 1.0)
             mtext(text = paste0("S = ", spectralEntropy), side = 3, adj = 1, line = 0.25, cex = 1.0)
             ##
             dev.off()
@@ -140,16 +140,17 @@ DDA_fragmentationPeakDetection <- function(DDA_hrms_address, DDA_hrms_file, peak
     } else {
       osType <- Sys.info()[['sysname']]
       if (osType == "Windows") {
-        clust <- makeCluster(number_processing_threads)
-        registerDoParallel(clust)
         ##
-        DDA_peaklist <- foreach(i = selectedIPApeaks, .combine = 'rbind', .verbose = FALSE) %dopar% {
+        clust <- makeCluster(number_processing_threads)
+        clusterExport(clust, setdiff(ls(), c("clust", "selectedIPApeaks")), envir = environment())
+        ##
+        DDA_peaklist <- do.call(rbind, parLapply(clust, selectedIPApeaks, function(i) {
           call_DDA_peaklist(i)
-        }
+        }))
         ##
         stopCluster(clust)
         ##
-      } else if (osType == "Linux") {
+      } else {
         ##
         DDA_peaklist <- do.call(rbind, mclapply(selectedIPApeaks, function(i) {
           call_DDA_peaklist(i)

@@ -1,5 +1,11 @@
 CSA_workflow <- function(PARAM_CSA) {
   ##
+  if (length(PARAM_CSA) == 1) {
+    if (typeof(PARAM_CSA) == "character") {
+      stop("Please use `IDSL.CSA_workflow('spreadsheet')` to use the IDSL.CSA package!")
+    }
+  }
+  ##
   CSA0001 <- tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0001'), 2])
   CSA0002 <- tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0002'), 2])
   CSA0003 <- tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0003'), 2])
@@ -17,6 +23,7 @@ CSA_workflow <- function(PARAM_CSA) {
   .logFSA <- NULL
   .logFSA <<- paste0(output_address, "/logCSA_performance.txt")
   FSA_logRecorder(paste0(rep("", 100), collapse = "="))
+  FSA_logRecorder("Type <<< citation('IDSL.CSA') >>> for citing this R package in publications.")
   FSA_logRecorder(paste0("mzML/mzXML/netCDF: ", input_path_hrms))
   FSA_logRecorder(paste0("OUTPUT: ", output_address))
   FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
@@ -207,10 +214,7 @@ CSA_workflow <- function(PARAM_CSA) {
     ##
     ############################################################################
     ##
-    call_CSA_workflow <- function(inputPathPeaklist, iHRMSfilename, refMSPcreationCheck, refCSAtable, refHRMSindexList, massErrorRef,
-                                  RTtoleranceRef, plotEICcheck, outputCSAeic, output_CSA_EICs_folder, input_path_hrms, tempAlignedTableSubsetsFolder,
-                                  RTtolerance, massError, minSNRbaseline, smoothingWindowMS1, scanTolerance, nSpline, topRatioPeakHeight,
-                                  minIonRangeDifference, minNumCSApeaks, pearsonRHOthreshold, msLevelCSA, CSAanalysisMethod, output_CSA_MSP) {
+    call_CSA_workflow <- function(iHRMSfilename) {
       ##
       peaklist <- loadRdata(paste0(inputPathPeaklist, "/peaklist_", iHRMSfilename, ".Rdata"))
       ##
@@ -230,6 +234,16 @@ CSA_workflow <- function(PARAM_CSA) {
         ##
         if (length(selectedIPApeaks_IDref) > 0) {
           selectedIPApeaks <- unique(selectedIPApeaks_IDref[, 1])
+          ##
+          nPeaklist <- dim(peaklist)[1]
+          RTtoleranceRef2 <- RTtoleranceRef*2
+          for (j in 1:nPeaklist) {
+            xIPA <- which(abs(peaklist[j, 3] - RTref[xRef]) <= RTtoleranceRef2)
+            if (length(xIPA) == 0) {
+              peaklist[j, ] <- 0
+            }
+          }
+          ##
         } else {
           selectedIPApeaks <- NULL
         }
@@ -237,9 +251,13 @@ CSA_workflow <- function(PARAM_CSA) {
         selectedIPApeaks <- NULL
       }
       ##
-      CSA_peaklist <- CSA_fragmentationPeakDetection(input_path_hrms, iHRMSfilename, tempAlignedTableSubsetsFolder, peaklist, selectedIPApeaks,
-                                                     RTtolerance, massError, minSNRbaseline, smoothingWindowMS1, scanTolerance, nSpline,
-                                                     topRatioPeakHeight, minIonRangeDifference, minNumCSApeaks, pearsonRHOthreshold, outputCSAeic)
+      if (!refMSPcreationCheck | (refMSPcreationCheck & !is.null(selectedIPApeaks))) {
+        CSA_peaklist <- CSA_fragmentationPeakDetection(input_path_hrms, iHRMSfilename, tempAlignedTableSubsetsFolder, peaklist, selectedIPApeaks,
+                                                       RTtolerance, massError, minSNRbaseline, smoothingWindowMS1, scanTolerance, nSpline,
+                                                       topRatioPeakHeight, minIonRangeDifference, minNumCSApeaks, pearsonRHOthreshold, outputCSAeic)
+      } else {
+        CSA_peaklist <- matrix(0, ncol = 1, nrow = 1)
+      }
       ##
       if (CSA_peaklist[1, 1] != 0) {
         if (refMSPcreationCheck) {
@@ -277,7 +295,7 @@ CSA_workflow <- function(PARAM_CSA) {
           write.table(CSA_MSP, file = paste0(output_CSA_MSP, "/CSA_MSP_", iHRMSfilename, ".msp"), quote = FALSE, sep = "\n", row.names = FALSE, col.names = FALSE)
         }
       } else {
-        FSA_logRecorder(paste0("No peak was detected for `", iHRMSfilename, "`!"))
+        FSA_logRecorder(paste0("No CSA spectra was detected for `", iHRMSfilename, "`!"))
       }
       ##
       return()
@@ -289,13 +307,10 @@ CSA_workflow <- function(PARAM_CSA) {
       ##
       iCounter <- 0
       progressBARboundaries <- txtProgressBar(min = 0, max = LHRMS, initial = 0, style = 3)
-      for (i in file_name_hrms) {
+      for (iHRMSfilename in file_name_hrms) {
         ##
-        null_variable <- tryCatch(call_CSA_workflow(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refCSAtable, refHRMSindexList, massErrorRef,
-                                                    RTtoleranceRef, plotEICcheck, outputCSAeic, output_CSA_EICs_folder, input_path_hrms, tempAlignedTableSubsetsFolder,
-                                                    RTtolerance, massError, minSNRbaseline, smoothingWindowMS1, scanTolerance, nSpline, topRatioPeakHeight,
-                                                    minIonRangeDifference, minNumCSApeaks, pearsonRHOthreshold, msLevelCSA, CSAanalysisMethod, output_CSA_MSP),
-                                  error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
+        null_variable <- tryCatch(call_CSA_workflow(iHRMSfilename),
+                                  error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
         ##
         iCounter <- iCounter + 1
         setTxtProgressBar(progressBARboundaries, iCounter)
@@ -305,34 +320,28 @@ CSA_workflow <- function(PARAM_CSA) {
     } else {
       osType <- Sys.info()[['sysname']]
       ##
-      if (osType == "Linux") {
+      if (osType == "Windows") {
         ##
-        null_variable <- mclapply(file_name_hrms, function(i) {
+        clust <- makeCluster(NPT)
+        clusterExport(clust, setdiff(ls(), c("clust", "file_name_hrms")), envir = environment())
+        ##
+        null_variable <- parLapply(clust, file_name_hrms, function(iHRMSfilename) {
           ##
-          tryCatch(call_CSA_workflow(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refCSAtable, refHRMSindexList, massErrorRef,
-                                     RTtoleranceRef, plotEICcheck, outputCSAeic, output_CSA_EICs_folder, input_path_hrms, tempAlignedTableSubsetsFolder,
-                                     RTtolerance, massError, minSNRbaseline, smoothingWindowMS1, scanTolerance, nSpline, topRatioPeakHeight,
-                                     minIonRangeDifference, minNumCSApeaks, pearsonRHOthreshold, msLevelCSA, CSAanalysisMethod, output_CSA_MSP),
-                   error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
+          tryCatch(call_CSA_workflow(iHRMSfilename),
+                   error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
+        })
+        ##
+        stopCluster(clust)
+        ##
+      } else {
+        ##
+        null_variable <- mclapply(file_name_hrms, function(iHRMSfilename) {
+          ##
+          tryCatch(call_CSA_workflow(iHRMSfilename),
+                   error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
         }, mc.cores = NPT)
         ##
         closeAllConnections()
-        ##
-      } else if (osType == "Windows") {
-        ##
-        clust <- makeCluster(NPT)
-        registerDoParallel(clust)
-        ##
-        null_variable <- foreach(i = file_name_hrms, .verbose = FALSE) %dopar% {
-          ##
-          tryCatch(call_CSA_workflow(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refCSAtable, refHRMSindexList, massErrorRef,
-                                     RTtoleranceRef, plotEICcheck, outputCSAeic, output_CSA_EICs_folder, input_path_hrms, tempAlignedTableSubsetsFolder,
-                                     RTtolerance, massError, minSNRbaseline, smoothingWindowMS1, scanTolerance, nSpline, topRatioPeakHeight,
-                                     minIonRangeDifference, minNumCSApeaks, pearsonRHOthreshold, msLevelCSA, CSAanalysisMethod, output_CSA_MSP),
-                   error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
-        }
-        ##
-        stopCluster(clust)
         ##
       }
     }
@@ -483,6 +492,8 @@ CSA_workflow <- function(PARAM_CSA) {
       ##########################################################################
       ##
       minTanimotoCoefficient2 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0034'), 2])
+      massError <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0036'), 2])
+      allowedWeightedSpectralEntropy <- eval(parse(text = PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0037'), 2]))
       ##
       listCSAaverageAlignedSpectra <- CSA_alignedMetaSpectraCataloger(output_CSA_MSP, peakXcol, peak_height, CSA_aligned_table, codetectedIDTC,
                                                                       minTanimotoCoefficient2, number_processing_threads = NPT)
@@ -539,8 +550,6 @@ CSA_workflow <- function(PARAM_CSA) {
       ########################### Cytoscape network ############################
       ##########################################################################
       ##
-      massError <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0036'), 2])
-      allowedWeightedSpectralEntropy <- eval(parse(text = PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0037'), 2]))
       minEntropySimilarity_AT <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0038'), 2])
       ##
       ##########################################################################

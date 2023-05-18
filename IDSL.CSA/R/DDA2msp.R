@@ -23,7 +23,7 @@ DDA2msp <- function(input_path_hrms, file_name_hrms = NULL, number_processing_th
     for (i in file_name_hrms) {
       ##
       null_variable <- tryCatch(call_DDA2msp(input_path_hrms, iHRMSfilename = i),
-                                error = function(e) {FSA_message(paste0("Problem with `", i,"`!"))})
+                                error = function(e) {FSA_message(paste0("Problem with `", i, "`!"))})
       ##
       iCounter <- iCounter + 1
       setTxtProgressBar(progressBARboundaries, iCounter)
@@ -36,32 +36,33 @@ DDA2msp <- function(input_path_hrms, file_name_hrms = NULL, number_processing_th
     ##
     osType <- Sys.info()[['sysname']]
     ##
-    if (osType == "Linux") {
+    if (osType == "Windows") {
+      ##
+      clust <- makeCluster(NPT0)
+      clusterExport(clust, setdiff(ls(), c("clust", "file_name_hrms")), envir = environment())
+      ##
+      null_variable <- parLapply(clust, file_name_hrms, function(i) {
+        ##
+        tryCatch(call_DDA2msp(input_path_hrms, iHRMSfilename = i),
+                 error = function(e) {FSA_message(paste0("Problem with `", i, "`!"))})
+      })
+      ##
+      stopCluster(clust)
+      ##
+    } else {
       ##
       null_variable <- mclapply(file_name_hrms, function(i) {
         ##
         tryCatch(call_DDA2msp(input_path_hrms, iHRMSfilename = i),
-                 error = function(e) {FSA_message(paste0("Problem with `", i,"`!"))})
+                 error = function(e) {FSA_message(paste0("Problem with `", i, "`!"))})
       }, mc.cores = NPT0)
       ##
       closeAllConnections()
-      ##
-    } else if (osType == "Windows") {
-      ##
-      clust <- makeCluster(NPT0)
-      registerDoParallel(clust)
-      ##
-      null_variable <- foreach(i = file_name_hrms, .verbose = FALSE) %dopar% {
-        ##
-        tryCatch(call_DDA2msp(input_path_hrms, iHRMSfilename = i),
-                 error = function(e) {FSA_message(paste0("Problem with `", i,"`!"))})
-      }
-      ##
-      stopCluster(clust)
       ##
     }
   }
   ##
   ##############################################################################
   ##
+  return()
 }

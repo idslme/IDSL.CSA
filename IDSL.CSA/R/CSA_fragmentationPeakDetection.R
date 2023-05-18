@@ -12,7 +12,7 @@ CSA_fragmentationPeakDetection <- function(CSA_hrms_address, CSA_hrms_file, temp
   } else {
     ##
     oldpar <- par(no.readonly = TRUE)
-    on.exit(par(oldpar))
+    on.exit(suppressWarnings(par(oldpar)))
     ##
     plotEICcheck <- TRUE
     ##
@@ -278,6 +278,9 @@ CSA_fragmentationPeakDetection <- function(CSA_hrms_address, CSA_hrms_file, temp
                                       CSAEICdata <- NULL
                                     }
                                     ##
+                                    xTopRatioPeakHeight <- which(chromatogramMatrixFragment[, 3]/height_fragment >= (1 - topRatioPeakHeight))
+                                    height_fragment <- sum(chromatogramMatrixFragment[xTopRatioPeakHeight, 3]) # to use an integrated intensity of the raw chromatogram
+                                    ##
                                     CSA_fragments <- c(mz_fragment[k], height_fragment, pearsonRHO)
                                     CSA_EICs[[k]] <- list(CSAEICdata, CSA_fragments, peakID[k])
                                   }
@@ -307,7 +310,9 @@ CSA_fragmentationPeakDetection <- function(CSA_hrms_address, CSA_hrms_file, temp
                         CSA_EICs[[j]][[2]]
                       }))
                       ##
-                      IPA12Cmz <- c(mz12CIPA[i], IntIPA[i], 1)
+                      xTopRatioPeakHeight <- which(chromatogramMatrixPrecursor[, 3]/max(chromatogramMatrixPrecursor[, 3]) >= (1 - topRatioPeakHeight))
+                      height_precursor <- sum(chromatogramMatrixPrecursor[xTopRatioPeakHeight, 3]) # to use an integrated intensity of the raw chromatogram
+                      IPA12Cmz <- c(mz12CIPA[i], height_precursor, 1)
                       CSAfragmentationList <- rbind(IPA12Cmz, CSA_fragments)
                       ionRangeDifference <- max(CSAfragmentationList[, 1]) - min(CSAfragmentationList[, 1])
                       ##
@@ -381,7 +386,7 @@ CSA_fragmentationPeakDetection <- function(CSA_hrms_address, CSA_hrms_file, temp
                             png(alignedEICfilename, width = 16, height = 8, units = "in", res = 100)
                             ##
                             par(mar = c(5.1, 4.1, 4.1, 13.8))
-                            plot(RT_chrom_precursor, Int_chrom_precursor, type = "l", ylim = c(0, yMaxLimPlot*1.01), lwd = 4, col = colors[1], cex = 4, xlab = "", ylab = "")
+                            plot(RT_chrom_precursor, Int_chrom_precursor, type = "l", ylim = c(0, yMaxLimPlot*1.01), lwd = 4, col = colors[1], cex = 4, yaxt = "n", xlab = "", ylab = "")
                             ##
                             pCounter <- 1
                             for (p in 1:nLines1) {
@@ -397,8 +402,8 @@ CSA_fragmentationPeakDetection <- function(CSA_hrms_address, CSA_hrms_file, temp
                             ##
                             mtext(text = paste0("S = ", spectralEntropy), side = 3, adj = 1, line = 0.25, cex = 1.0)
                             mtext("Retention time (min)", side = 1, adj = 0.5, line = 2, cex = 1.35)
-                            mtext("Intensity", side = 2, adj = 0.5, line = 2, cex = 1.35)
-                            mtext(CSA_hrms_file, side = 3, adj = 0, line = 0.25, cex = 1.4)
+                            mtext("Intensity", side = 2, adj = 0.50, line = 1, cex = 1.35)
+                            mtext(CSA_hrms_file, side = 3, adj = 0, line = 0.25, cex = 1.0)
                             legend(x = "topright", inset = c(-0.20, 0), legend = legText, lwd = c(4, rep(2, nLines1)), cex = 1.125, bty = "n",
                                    col = legCol, seg.len = 1, x.intersp = 0.5, y.intersp = 0.9, xpd = TRUE)
                             ##

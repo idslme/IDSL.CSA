@@ -1,5 +1,11 @@
 DDA_workflow <- function(PARAM_DDA) {
   ##
+  if (length(PARAM_DDA) == 1) {
+    if (typeof(PARAM_DDA) == "character") {
+      stop("Please use `IDSL.CSA_workflow('spreadsheet')` to use the IDSL.CSA package!")
+    }
+  }
+  ##
   msLevelDDA <- 2
   ##
   x0000 <- which(PARAM_DDA[, 1] == 'DDA0000')
@@ -16,7 +22,6 @@ DDA_workflow <- function(PARAM_DDA) {
   ##
   output_address <- PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0011'), 2]
   FSA_dir.create(output_address, allowedUnlink = FALSE)
-  opendir(output_address)
   ##
   ##############################################################################
   ## To create log record for IDSL.CSA
@@ -25,6 +30,7 @@ DDA_workflow <- function(PARAM_DDA) {
   .logFSA <- NULL
   .logFSA <<- paste0(output_address, "/logDDA_performance.txt")
   FSA_logRecorder(paste0(rep("", 100), collapse = "="))
+  FSA_logRecorder("Type <<< citation('IDSL.CSA') >>> for citing this R package in publications.")
   FSA_logRecorder(paste0("mzML/mzXML/netCDF: ", input_path_hrms))
   FSA_logRecorder(paste0("OUTPUT: ", output_address))
   FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
@@ -85,8 +91,6 @@ DDA_workflow <- function(PARAM_DDA) {
   ##
   ##############################################################################
   ##
-  IDSL.IPA::opendir(output_DDA_MSP)
-  ##
   LHRMS <- length(file_name_hrms)
   if (LHRMS == 0) {
     stop(FSA_logRecorder("EMPTY HRMS FOLDER!!!"))
@@ -118,9 +122,7 @@ DDA_workflow <- function(PARAM_DDA) {
         DDAprocessingMode <- NULL
       }
       ##
-      DDA_workflow_call <- function(inputPathPeaklist, iHRMSfilename, refMSPcreationCheck, refHRMSindexList, rawDDAspectraVar, massErrorRef, RTtoleranceRef,
-                                    indexedIPApeaksCheck, selectedIPApeaks, plotDDAspectraCheck, outputDDAspectra, output_DDA_spectra_folder, input_path_hrms,
-                                    massErrorPrecursor, DDAprocessingMode, NPT, refDDAtable, msLevelDDA, spectral_search_mode_option, output_DDA_MSP) {
+      DDA_workflow_call <- function(iHRMSfilename) {
         ##
         if (refMSPcreationCheck) {
           xRef <- refHRMSindexList[[iHRMSfilename]]
@@ -203,7 +205,6 @@ DDA_workflow <- function(PARAM_DDA) {
         ##
         output_DDA_spectra_folder <- paste0(output_address, "/DDA_spectra")
         FSA_dir.create(output_DDA_spectra_folder, allowedUnlink = FALSE)
-        opendir(output_DDA_spectra_folder)
         FSA_logRecorder("DDA spectra figures for MS2 ions are stored in the `DDA_spectra` folder!")
         ##
       } else {
@@ -244,9 +245,7 @@ DDA_workflow <- function(PARAM_DDA) {
       ##
       ##########################################################################
       ##
-      DDA_workflow_call <- function(inputPathPeaklist, iHRMSfilename, refMSPcreationCheck, refHRMSindexList, rawDDAspectraVar, massErrorRef, RTtoleranceRef,
-                                    indexedIPApeaksCheck, selectedIPApeaks, plotDDAspectraCheck, outputDDAspectra, output_DDA_spectra_folder, input_path_hrms,
-                                    massErrorPrecursor, DDAprocessingMode, NPT, refDDAtable, msLevelDDA, spectral_search_mode_option, output_DDA_MSP) {
+      DDA_workflow_call <- function(iHRMSfilename) {
         ##
         peaklist <- loadRdata(paste0(inputPathPeaklist, "/peaklist_", iHRMSfilename, ".Rdata"))
         ##
@@ -306,12 +305,10 @@ DDA_workflow <- function(PARAM_DDA) {
       ##
       iCounter <- 0
       progressBARboundaries <- txtProgressBar(min = 0, max = LHRMS, initial = 0, style = 3)
-      for (i in file_name_hrms) {
+      for (iHRMSfilename in file_name_hrms) {
         ##
-        null_variable <- tryCatch(DDA_workflow_call(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refHRMSindexList, rawDDAspectraVar, massErrorRef, RTtoleranceRef,
-                                                    indexedIPApeaksCheck, selectedIPApeaks, plotDDAspectraCheck, outputDDAspectra, output_DDA_spectra_folder, input_path_hrms,
-                                                    massErrorPrecursor, DDAprocessingMode, NPT, refDDAtable, msLevelDDA, spectral_search_mode_option, output_DDA_MSP),
-                                  error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
+        null_variable <- tryCatch(DDA_workflow_call(iHRMSfilename),
+                                  error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
         ##
         iCounter <- iCounter + 1
         setTxtProgressBar(progressBARboundaries, iCounter)
@@ -324,32 +321,28 @@ DDA_workflow <- function(PARAM_DDA) {
       ##
       osType <- Sys.info()[['sysname']]
       ##
-      if (osType == "Linux") {
+      if (osType == "Windows") {
         ##
-        null_variable <- mclapply(file_name_hrms, function(i) {
+        clust <- makeCluster(NPT0)
+        clusterExport(clust, setdiff(ls(), c("clust", "file_name_hrms")), envir = environment())
+        ##
+        null_variable <- parLapply(clust, file_name_hrms, function(iHRMSfilename) {
           ##
-          tryCatch(DDA_workflow_call(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refHRMSindexList, rawDDAspectraVar, massErrorRef, RTtoleranceRef,
-                                     indexedIPApeaksCheck, selectedIPApeaks, plotDDAspectraCheck, outputDDAspectra, output_DDA_spectra_folder, input_path_hrms,
-                                     massErrorPrecursor, DDAprocessingMode, NPT, refDDAtable, msLevelDDA, spectral_search_mode_option, output_DDA_MSP),
-                   error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
+          tryCatch(DDA_workflow_call(iHRMSfilename),
+                   error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
+        })
+        ##
+        stopCluster(clust)
+        ##
+      } else {
+        ##
+        null_variable <- mclapply(file_name_hrms, function(iHRMSfilename) {
+          ##
+          tryCatch(DDA_workflow_call(iHRMSfilename),
+                   error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
         }, mc.cores = NPT0)
         ##
         closeAllConnections()
-        ##
-      } else if (osType == "Windows") {
-        ##
-        clust <- makeCluster(NPT0)
-        registerDoParallel(clust)
-        ##
-        null_variable <- foreach(i = file_name_hrms, .verbose = FALSE) %dopar% {
-          ##
-          tryCatch(DDA_workflow_call(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refHRMSindexList, rawDDAspectraVar, massErrorRef, RTtoleranceRef,
-                                     indexedIPApeaksCheck, selectedIPApeaks, plotDDAspectraCheck, outputDDAspectra, output_DDA_spectra_folder, input_path_hrms,
-                                     massErrorPrecursor, DDAprocessingMode, NPT, refDDAtable, msLevelDDA, spectral_search_mode_option, output_DDA_MSP),
-                   error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
-        }
-        ##
-        stopCluster(clust)
         ##
       }
       NPT <- NPT0

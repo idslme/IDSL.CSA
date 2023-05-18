@@ -65,26 +65,35 @@ DDA_rawSpectraDeconvolution <- function(DDA_hrms_address, DDA_hrms_file, rawDDAs
       osType <- Sys.info()[['sysname']]
       if (osType == "Windows") {
         ##
-        clust <- makeCluster(number_processing_threads)
-        registerDoParallel(clust)
-        ##
         if (rawDDAFilteringTrue) {
-          xScanTable <- foreach(i = 1:lengthVec, .combine = 'c', .verbose = FALSE) %dopar% {
+          ##
+          clust <- makeCluster(number_processing_threads)
+          clusterExport(clust, setdiff(ls(), c("clust", "lengthVec")), envir = environment())
+          ##
+          xScanTable <- do.call(c, parLapply(clust, 1:lengthVec, function(i) {
             mzRTindexer(precursorMZ, RetentionTime, precursorMZvec[i], precursorRTvec[i], massError, RTtolerance)
-          }
+          }))
+          ##
+          stopCluster(clust)
+          ##
         } else {
           xScanTable <- seq(1, dim(scanTable)[1], 1)
         }
         ##
         if (!is.null(xScanTable)) {
-          DDA_peaklist <- foreach(i = xScanTable, .combine = 'rbind', .verbose = FALSE) %dopar% {
+          ##
+          clust <- makeCluster(number_processing_threads)
+          clusterExport(clust, setdiff(ls(), c("clust", "xScanTable")), envir = environment())
+          ##
+          DDA_peaklist <- do.call(rbind, parLapply(clust, xScanTable, function(i) {
             DDA_peaklist_call(i)
-          }
+          }))
+          ##
+          stopCluster(clust)
+          ##
         }
         ##
-        stopCluster(clust)
-        ##
-      } else if (osType == "Linux") {
+      } else {
         ##
         if (rawDDAFilteringTrue) {
           xScanTable <- do.call(c, mclapply(1:lengthVec, function(i) {

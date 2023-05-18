@@ -200,6 +200,7 @@ IDSL.CSA_xlsxAnalyzer <- function(spreadsheet) {
     }
     ############################################################################
     ######################### Sample import and export #########################
+    ############################################################################
     x0007 <- which(PARAM_Start[, 1] == 'PARAM0007')
     if (length(x0007) == 0) {
       FSA_message("ERROR!!! Problem with PARAM0007!")
@@ -300,7 +301,7 @@ IDSL.CSA_xlsxAnalyzer <- function(spreadsheet) {
     ##
     if (PARAM0005 == "yes" | PARAM0006 == "yes") {
       x0009 <- which(PARAM_Start[, 1] == 'PARAM0009')
-      if ((PARAM0001 == "no" & PARAM0002 == "no" & PARAM0003 == "no") | (PARAM0005 == "no" & PARAM0006 == "yes")) {
+      if ((PARAM0001 == "no" & PARAM0002 == "no" & PARAM0003 == "no")) {
         if (length(x0009) == 0) {
           FSA_message("ERROR!!! Problem with PARAM0009!")
           checkpoint_parameter <- FALSE
@@ -331,7 +332,7 @@ IDSL.CSA_xlsxAnalyzer <- function(spreadsheet) {
         }
       }
     }
-    ##########################################################################
+    ############################################################################
     if ((PARAM0004 == "yes") & !is.null(PARAM_SPEC) & (PARAM0005 == "yes") & !is.null(PARAM_FSdb)) {
       ##
       FSdb0007 <- as.numeric(PARAM_FSdb[which(PARAM_FSdb[, 1] == 'FSdb0007'), 2])
@@ -359,7 +360,6 @@ IDSL.CSA_xlsxAnalyzer <- function(spreadsheet) {
   ##############################################################################
   if (!checkpoint_parameter) {
     PARAM_total <- vector(mode = "list", 7)
-    FSA_message("Please visit    https://csa.idsl.me    for instructions!!!")
     ##
   } else {
     ##

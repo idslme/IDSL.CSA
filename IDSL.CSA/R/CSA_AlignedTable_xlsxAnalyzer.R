@@ -1,16 +1,21 @@
 CSA_AlignedTable_xlsxAnalyzer <- function(spreadsheet) {
   ##
   checkpoint_parameter <- FALSE
-  #
-  if (length(spreadsheet) >= 4) {
-    if (typeof(spreadsheet) == "list") {
+  ##
+  if (typeof(spreadsheet) == "list") {
+    if (ncol(spreadsheet) >= 4) {
       PARAM_AT <- cbind(spreadsheet[, 2], spreadsheet[, 4])
       checkpoint_parameter <- TRUE
+      ##
+    } else if (ncol(spreadsheet) == 2) {
+      PARAM_AT <- spreadsheet
+      checkpoint_parameter <- TRUE
+      ##
     } else {
       FSA_message("The `AlignedTable` spreadsheet tab was not produced properly!")
     }
-  } else if (length(spreadsheet) == 1) {
-    if (typeof(spreadsheet) == "character") {
+  } else if (typeof(spreadsheet) == "character") {
+    if (length(spreadsheet) == 1) {
       if (file.exists(spreadsheet)) {
         PARAM_AT <- readxl::read_xlsx(spreadsheet, sheet = "AlignedTable")
         PARAM_AT <- cbind(PARAM_AT[, 2], PARAM_AT[, 4])
@@ -24,9 +29,9 @@ CSA_AlignedTable_xlsxAnalyzer <- function(spreadsheet) {
   } else {
     FSA_message("The `AlignedTable` spreadsheet tab was not produced properly!")
   }
-  ##
+  ##############################################################################
   if (checkpoint_parameter) {
-    ############################################################################
+    ##
     listAlignmentFolderCheck <- IPA_peak_alignment_folder_xlsxAnalyzer(PARAM_AT, PARAM_ID = 'AT0001', checkpoint_parameter, correctedRTcheck = FALSE, CSAcheck = FALSE)
     PARAM_AT <- listAlignmentFolderCheck[[1]]
     checkpoint_parameter <- listAlignmentFolderCheck[[2]]

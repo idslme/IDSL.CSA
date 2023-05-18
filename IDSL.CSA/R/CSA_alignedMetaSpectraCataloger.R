@@ -199,7 +199,34 @@ CSA_alignedMetaSpectraCataloger <- function(address_input_msp, peakXcol, peak_he
     ##
     osType <- Sys.info()[['sysname']]
     ##
-    if (osType == "Linux") {
+    if (osType == "Windows") {
+      ##
+      ############################################################################
+      ##
+      clust <- makeCluster(number_processing_threads)
+      clusterExport(clust, setdiff(ls(), c("clust")), envir = environment())
+      ##
+      MSPvectorAverage <- do.call(c, parLapply(clust, 1:length(xsDiff1), function(i) {
+        call_MSPvectorAverage(i)
+      }))
+      ##
+      stopCluster(clust)
+      ##
+      CSA_aligned_property_table <- NULL
+      ##
+      ############################################################################
+      ##
+      clust <- makeCluster(number_processing_threads)
+      clusterExport(clust, setdiff(ls(), c("clust")), envir = environment())
+      ##
+      MSPvectorMAX <- do.call(c, parLapply(clust, 1:length(xsDiff1), function(i) {
+        call_MSPvectorMAX(i)
+      }))
+      ##
+      stopCluster(clust)
+      ############################################################################
+      ##
+    } else {
       ##
       ##########################################################################
       ##
@@ -218,27 +245,6 @@ CSA_alignedMetaSpectraCataloger <- function(address_input_msp, peakXcol, peak_he
       ##
       closeAllConnections()
       ##
-    } else if (osType == "Windows") {
-      ##
-      clust <- makeCluster(number_processing_threads)
-      registerDoParallel(clust)
-      ##
-      ##########################################################################
-      ##
-      MSPvectorAverage <- foreach(i = 1:length(xsDiff1), .combine = 'c', .verbose = FALSE) %dopar% {
-        call_MSPvectorAverage(i)
-      }
-      CSA_aligned_property_table <- NULL
-      ##
-      ##########################################################################
-      ##
-      MSPvectorMAX <- foreach(i = 1:length(xsDiff1), .combine = 'c', .verbose = FALSE) %dopar% {
-        call_MSPvectorMAX(i)
-      }
-      ##
-      ##########################################################################
-      ##
-      stopCluster(clust)
     }
   }
   ##############################################################################

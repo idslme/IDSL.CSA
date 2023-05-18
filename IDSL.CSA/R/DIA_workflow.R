@@ -1,5 +1,11 @@
 DIA_workflow <- function(PARAM_DIA) {
   ##
+  if (length(PARAM_DIA) == 1) {
+    if (typeof(PARAM_DIA) == "character") {
+      stop("Please use `IDSL.CSA_workflow('spreadsheet')` to use the IDSL.CSA package!")
+    }
+  }
+  ##
   DIA0001 <- tolower(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0001'), 2])
   DIA0002 <- tolower(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0002'), 2])
   NPT <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == "DIA0003"), 2])
@@ -7,7 +13,6 @@ DIA_workflow <- function(PARAM_DIA) {
   ##
   output_address <- PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0011'), 2]
   FSA_dir.create(output_address, allowedUnlink = FALSE)
-  opendir(output_address)
   ##
   ##############################################################################
   ## To create log record for IDSL.CSA
@@ -16,6 +21,7 @@ DIA_workflow <- function(PARAM_DIA) {
   .logFSA <- NULL
   .logFSA <<- paste0(output_address, "/logDIA_performance.txt")
   FSA_logRecorder(paste0(rep("", 100), collapse = "="))
+  FSA_logRecorder("Type <<< citation('IDSL.CSA') >>> for citing this R package in publications.")
   FSA_logRecorder(paste0("mzML/mzXML/netCDF:  ", input_path_hrms))
   FSA_logRecorder(paste0("OUTPUT:  ", output_address))
   FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
@@ -75,8 +81,6 @@ DIA_workflow <- function(PARAM_DIA) {
   ##
   ##############################################################################
   ##
-  IDSL.IPA::opendir(output_DIA_MSP)
-  ##
   LHRMS <- length(file_name_hrms)
   if (LHRMS == 0) {
     stop(FSA_logRecorder("EMPTY HRMS FOLDER!!!"))
@@ -126,7 +130,6 @@ DIA_workflow <- function(PARAM_DIA) {
       ##
       output_DIA_EICs_folder <- paste0(output_address, "/DIA_EICs")
       FSA_dir.create(output_DIA_EICs_folder, allowedUnlink = FALSE)
-      opendir(output_DIA_EICs_folder)
       FSA_logRecorder("Aligned extracted ion chromatogram (EIC) figures for deconvoluted ions are stored in the `DIA_EICs` folder!")
       ##
     } else {
@@ -164,10 +167,7 @@ DIA_workflow <- function(PARAM_DIA) {
     ##
     ############################################################################
     ##
-    DIA_workflow_call <- function(inputPathPeaklist, iHRMSfilename, refMSPcreationCheck, refDIAtable, refHRMSindexList, massErrorRef, RTtoleranceRef,
-                                  indexedIPApeaksCheck, selectedIPApeaks, plotEICcheck, outputDIAeic, output_DIA_EICs_folder, input_path_hrms,
-                                  massError, smoothingWindowMS1, smoothingWindowMS2, scanTolerance, nSpline, topRatioPeakHeight,
-                                  intensityThresholdFragment, pearsonRHOthreshold, NPT, msLevelDIA, output_DIA_MSP) {
+    DIA_workflow_call <- function(iHRMSfilename) {
       ##
       peaklist <- loadRdata(paste0(inputPathPeaklist, "/peaklist_", iHRMSfilename, ".Rdata"))
       ##
@@ -235,13 +235,10 @@ DIA_workflow <- function(PARAM_DIA) {
       ##
       iCounter <- 0
       progressBARboundaries <- txtProgressBar(min = 0, max = LHRMS, initial = 0, style = 3)
-      for (i in file_name_hrms) {
+      for (iHRMSfilename in file_name_hrms) {
         ##
-        null_variable <- tryCatch(DIA_workflow_call(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refDIAtable, refHRMSindexList, massErrorRef, RTtoleranceRef,
-                                                    indexedIPApeaksCheck, selectedIPApeaks, plotEICcheck, outputDIAeic, output_DIA_EICs_folder, input_path_hrms,
-                                                    massError, smoothingWindowMS1, smoothingWindowMS2, scanTolerance, nSpline, topRatioPeakHeight,
-                                                    intensityThresholdFragment, pearsonRHOthreshold, NPT, msLevelDIA, output_DIA_MSP),
-                                  error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
+        null_variable <- tryCatch(DIA_workflow_call(iHRMSfilename),
+                                  error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
         ##
         iCounter <- iCounter + 1
         setTxtProgressBar(progressBARboundaries, iCounter)
@@ -254,34 +251,28 @@ DIA_workflow <- function(PARAM_DIA) {
       ##
       osType <- Sys.info()[['sysname']]
       ##
-      if (osType == "Linux") {
+      if (osType == "Windows") {
         ##
-        null_variable <- mclapply(file_name_hrms, function(i) {
+        clust <- makeCluster(NPT0)
+        clusterExport(clust, setdiff(ls(), c("clust", "file_name_hrms")), envir = environment())
+        ##
+        null_variable <- parLapply(clust, file_name_hrms, function(iHRMSfilename) {
           ##
-          null_variable <- tryCatch(DIA_workflow_call(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refDIAtable, refHRMSindexList, massErrorRef, RTtoleranceRef,
-                                                      indexedIPApeaksCheck, selectedIPApeaks, plotEICcheck, outputDIAeic, output_DIA_EICs_folder, input_path_hrms,
-                                                      massError, smoothingWindowMS1, smoothingWindowMS2, scanTolerance, nSpline, topRatioPeakHeight,
-                                                      intensityThresholdFragment, pearsonRHOthreshold, NPT, msLevelDIA, output_DIA_MSP),
-                                    error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
+          tryCatch(DIA_workflow_call(iHRMSfilename),
+                   error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
+        })
+        ##
+        stopCluster(clust)
+        ##
+      } else {
+        ##
+        null_variable <- mclapply(file_name_hrms, function(iHRMSfilename) {
+          ##
+          tryCatch(DIA_workflow_call(iHRMSfilename),
+                   error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
         }, mc.cores = NPT0)
         ##
         closeAllConnections()
-        ##
-      } else if (osType == "Windows") {
-        ##
-        clust <- makeCluster(NPT0)
-        registerDoParallel(clust)
-        ##
-        null_variable <- foreach(i = file_name_hrms, .verbose = FALSE) %dopar% {
-          ##
-          null_variable <- tryCatch(DIA_workflow_call(inputPathPeaklist, iHRMSfilename = i, refMSPcreationCheck, refDIAtable, refHRMSindexList, massErrorRef, RTtoleranceRef,
-                                                      indexedIPApeaksCheck, selectedIPApeaks, plotEICcheck, outputDIAeic, output_DIA_EICs_folder, input_path_hrms,
-                                                      massError, smoothingWindowMS1, smoothingWindowMS2, scanTolerance, nSpline, topRatioPeakHeight,
-                                                      intensityThresholdFragment, pearsonRHOthreshold, NPT, msLevelDIA, output_DIA_MSP),
-                                    error = function(e) {FSA_logRecorder(paste0("Problem with `", i,"`!"))})
-        }
-        ##
-        stopCluster(clust)
         ##
       }
       NPT <- NPT0

@@ -10,7 +10,7 @@ DIA_MS1_fragmentationPeakDetection <- function(DIA_hrms_address, DIA_hrms_file, 
   } else {
     ##
     oldpar <- par(no.readonly = TRUE)
-    on.exit(par(oldpar))
+    on.exit(suppressWarnings(par(oldpar)))
     ##
     plotEICcheck <- TRUE
     ##
@@ -100,12 +100,12 @@ DIA_MS1_fragmentationPeakDetection <- function(DIA_hrms_address, DIA_hrms_file, 
           RT_spline_precursor <- RT_spline_precursor[x_topRatioPeakHeight]
           Int_spline_precursor <- Int_spline_precursor[x_topRatioPeakHeight]
           ######################################################################
-          peaks <- spectraList[[scanNumberApex]]
+          peaks_MS1 <- spectraList[[scanNumberApex]]
           # To remove peaks below intensity threshold
-          x_mz_fragment <- which((peaks[, 2] >= intensityThresholdFragment) & (abs(peaks[, 1] - mz12CIPA[i]) > massError))
+          x_mz_fragment <- which((peaks_MS1[, 2] >= intensityThresholdFragment) & (peaks_MS1[, 1] <= (mz12CIPA[i] + 10))) # 10 was added to include the isotope envelope of the precursor mass
           L_mz_fragment <- length(x_mz_fragment)
           if (L_mz_fragment > 1) {
-            mz_fragment <- peaks[x_mz_fragment, 1]
+            mz_fragment <- peaks_MS1[x_mz_fragment, 1]
             ##
             DIA_EICs <- lapply(1:L_mz_fragment, function(k) {
               ##
@@ -182,6 +182,9 @@ DIA_MS1_fragmentationPeakDetection <- function(DIA_hrms_address, DIA_hrms_file, 
                             DIAEICdata <- NULL
                           }
                           ##
+                          xTopRatioPeakHeight <- which(chromatogramMatrixFragment[, 3]/height_fragment >= (1 - topRatioPeakHeight))
+                          height_fragment <- sum(chromatogramMatrixFragment[xTopRatioPeakHeight, 3]) # to use an integrated intensity of the raw chromatogram
+                          ##
                           DIA_fragments <- c(mz_fragment[k], height_fragment, pearsonRHO)
                           list(DIAEICdata, DIA_fragments)
                         }
@@ -241,7 +244,7 @@ DIA_MS1_fragmentationPeakDetection <- function(DIA_hrms_address, DIA_hrms_file, 
                 png(alignedEICfilename, width = 16, height = 8, units = "in", res = 100)
                 ##
                 par(mar = c(5.1, 4.1, 4.1, 13.8))
-                plot(RT_chrom_precursor, Int_chrom_precursor, type = "l", ylim = c(0, yMaxLimPlot*1.01), lwd = 4, col = colors[1], cex = 4, xlab = "", ylab = "")
+                plot(RT_chrom_precursor, Int_chrom_precursor, type = "l", ylim = c(0, yMaxLimPlot*1.01), lwd = 4, col = colors[1], cex = 4, yaxt = "n", xlab = "", ylab = "")
                 ##
                 pCounter <- 1
                 for (p in 1:nLines1) {
@@ -257,8 +260,8 @@ DIA_MS1_fragmentationPeakDetection <- function(DIA_hrms_address, DIA_hrms_file, 
                 ##
                 mtext(text = paste0("S = ", spectralEntropy), side = 3, adj = 1, line = 0.25, cex = 1.0)
                 mtext("Retention time (min)", side = 1, adj = 0.5, line = 2, cex = 1.35)
-                mtext("Intensity", side = 2, adj = 0.5, line = 2, cex = 1.35)
-                mtext(DIA_hrms_file, side = 3, adj = 0, line = 0.25, cex = 1.4)
+                mtext("Intensity", side = 2, adj = 0.50, line = 1, cex = 1.35)
+                mtext(DIA_hrms_file, side = 3, adj = 0, line = 0.25, cex = 1.0)
                 legend(x = "topright", inset = c(-0.22, 0), legend = legText, lwd = c(4, rep(2, nLines1)), cex = 1.125, bty = "n",
                        col = legCol, seg.len = 1, x.intersp = 0.5, y.intersp = 0.9, xpd = TRUE)
                 ##
@@ -281,24 +284,24 @@ DIA_MS1_fragmentationPeakDetection <- function(DIA_hrms_address, DIA_hrms_file, 
     ##
     osType <- Sys.info()[['sysname']]
     ##
-    if (osType == "Linux") {
+    if (osType == "Windows") {
+      ##
+      clust <- makeCluster(number_processing_threads)
+      clusterExport(clust, setdiff(ls(), c("clust", "selectedIPApeaks")), envir = environment())
+      ##
+      DIA_peaklist <- do.call(rbind, parLapply(clust, selectedIPApeaks, function(i) {
+        call_DIA_peaklist(i)
+      }))
+      ##
+      stopCluster(clust)
+      ##
+    } else {
       ##
       DIA_peaklist <- do.call(rbind, mclapply(selectedIPApeaks, function(i) {
         call_DIA_peaklist(i)
       }, mc.cores = number_processing_threads))
       ##
       closeAllConnections()
-      ##
-    } else if (osType == "Windows") {
-      ##
-      clust <- makeCluster(number_processing_threads)
-      registerDoParallel(clust)
-      ##
-      DIA_peaklist <- foreach(i = selectedIPApeaks, .combine = 'rbind', .verbose = FALSE) %dopar% {
-        call_DIA_peaklist(i)
-      }
-      ##
-      stopCluster(clust)
       ##
     }
   }

@@ -46,7 +46,7 @@ CSA_reference_xlsxAnalyzer <- function(ref_xlsx_file, input_path_hrms = NULL, PA
     } else if (RefFileFormat == "csv") {
       ref_table <- data.frame(read.csv(file = ref_xlsx_file, header = TRUE))
     } else {
-      stop("Incorrect reference file format")
+      stop("Incorrect reference file format!")
     }
     ##
     col <- colnames(ref_table)

@@ -141,6 +141,7 @@ CSA_alignedPeaksTanimotoCoefficientCalculator <- function(address_input_msp, pea
       peakXmsp <- peakXmsp[order(peakXmsp[, 1], decreasing = TRUE), ]
       peakXmsp <- peakXmsp[order(peakXmsp[, 2], decreasing = TRUE), ]
       ##
+      peakXcol <- NULL
       LXDF <- dim(peakXmsp)[1]
       ##
       ##########################################################################
@@ -179,13 +180,106 @@ CSA_alignedPeaksTanimotoCoefficientCalculator <- function(address_input_msp, pea
       ##
       IDTC <- NULL
     }
+    ##
     ############################################################################
     ##
   } else {
     ##
     osType <- Sys.info()[['sysname']]
     ##
-    if (osType == "Linux") {
+    if (osType == "Windows") {
+      ##
+      ##########################################################################
+      ##
+      clust <- makeCluster(number_processing_threads)
+      clusterExport(clust, setdiff(ls(), c("clust", "L_MSP")), envir = environment())
+      ##
+      peakXmsp <- do.call(cbind, parLapply(clust, 1:L_MSP, function(i) {
+        iCheck <- i %in% seqMSP
+        if (iCheck) {
+          call_peakXmsp(i)
+        } else {
+          rep0LpeakXcol
+        }
+      }))
+      ##
+      stopCluster(clust)
+      ##
+      ##########################################################################
+      ##
+      l_non0 <- max(peakXmsp[, 1])
+      for (i in 2:L_MSP) {
+        x_non0 <- which(peakXmsp[, i] > 0)
+        peakXmsp[x_non0, i] <- peakXmsp[x_non0, i] + l_non0 + 1
+        l_non0 <- max(c(peakXmsp[, i], l_non0))
+      }
+      ##
+      ##########################################################################
+      if (l_non0 > 0) {
+        ##
+        ########################################################################
+        ##
+        clust <- makeCluster(number_processing_threads)
+        clusterExport(clust, c("peakXmsp"), envir = environment())
+        ##
+        numberCSAdetFreq <- do.call(c, parLapply(clust, 1:L_peakXcol, function(i) {
+          length(which(peakXmsp[i, ] > 0))
+        }))
+        ##
+        stopCluster(clust)
+        ##
+        xDetFreq <- which(numberCSAdetFreq/L_MSP >= minPercenetageDetection/100)
+        ##
+        peakXmsp <- cbind(xDetFreq, peakXcol[xDetFreq, 2:3], peakXmsp[xDetFreq, ])
+        peakXmsp <- peakXmsp[order(peakXmsp[, 1], decreasing = TRUE), ]
+        peakXmsp <- peakXmsp[order(peakXmsp[, 2], decreasing = TRUE), ]
+        ##      
+        peakXcol <- NULL
+        LXDF <- dim(peakXmsp)[1]
+        ##
+        ########################################################################
+        ##
+        IDX <- peakXmsp[, 1]
+        RTX <- peakXmsp[, 2]
+        SX <- peakXmsp[, 3]
+        ##
+        ########################################################################
+        ##
+        clust <- makeCluster(number_processing_threads)
+        clusterExport(clust, c("peakXmsp", "Lsamples"), envir = environment())
+        ##
+        peakXlist <- parLapply(clust, 1:LXDF, function(i) {
+          px <- peakXmsp[i, 4:Lsamples]
+          px[px != 0]
+        })
+        ##
+        stopCluster(clust)
+        ##
+        names(peakXlist) <- as.character(IDX)
+        ##
+        peakXmsp <- NULL
+        ##
+        ########################################################################
+        ##
+        FSA_logRecorder("Initiated calculating Tanimoto coefficients!")
+        ##
+        clust <- makeCluster(number_processing_threads)
+        clusterExport(clust, setdiff(ls(), c("clust", "LXDF")), envir = environment())
+        ##
+        IDTC <- do.call(rbind, parLapply(clust, 1:LXDF, function(i) {
+          call_IDTC(i)
+        }))
+        ##
+        stopCluster(clust)
+        ##
+      } else {
+        ##
+        IDTC <- NULL
+      }
+      ##
+      ##########################################################################
+      ##
+    } else {
       ##
       ##########################################################################
       ##
@@ -222,6 +316,7 @@ CSA_alignedPeaksTanimotoCoefficientCalculator <- function(address_input_msp, pea
         peakXmsp <- peakXmsp[order(peakXmsp[, 1], decreasing = TRUE), ]
         peakXmsp <- peakXmsp[order(peakXmsp[, 2], decreasing = TRUE), ]
         ##
+        peakXcol <- NULL
         LXDF <- dim(peakXmsp)[1]
         ##
         ########################################################################
@@ -257,80 +352,6 @@ CSA_alignedPeaksTanimotoCoefficientCalculator <- function(address_input_msp, pea
       ##
       closeAllConnections()
       ##
-    } else if (osType == "Windows") {
-      ##
-      clust <- makeCluster(number_processing_threads)
-      registerDoParallel(clust)
-      ##
-      ##########################################################################
-      ##
-      peakXmsp <- foreach(i = 1:L_MSP, .combine = 'cbind', .verbose = FALSE) %dopar% {
-        iCheck <- i %in% seqMSP
-        if (iCheck) {
-          call_peakXmsp(i)
-        } else {
-          rep0LpeakXcol
-        }
-      }
-      ##
-      ##########################################################################
-      ##
-      l_non0 <- max(peakXmsp[, 1])
-      for (i in 2:L_MSP) {
-        x_non0 <- which(peakXmsp[, i] > 0)
-        peakXmsp[x_non0, i] <- peakXmsp[x_non0, i] + l_non0 + 1
-        l_non0 <- max(c(peakXmsp[, i], l_non0))
-      }
-      ##
-      ##########################################################################
-      if (l_non0 > 0) {
-        ##
-        ########################################################################
-        ##
-        numberCSAdetFreq <- foreach(i = 1:L_peakXcol, .combine = 'c', .verbose = FALSE) %dopar% {
-          length(which(peakXmsp[i, ] > 0))
-        }
-        ##
-        xDetFreq <- which(numberCSAdetFreq/L_MSP >= minPercenetageDetection/100)
-        ##
-        peakXmsp <- cbind(xDetFreq, peakXcol[xDetFreq, 2:3], peakXmsp[xDetFreq, ])
-        peakXmsp <- peakXmsp[order(peakXmsp[, 1], decreasing = TRUE), ]
-        peakXmsp <- peakXmsp[order(peakXmsp[, 2], decreasing = TRUE), ]
-        ##
-        LXDF <- dim(peakXmsp)[1]
-        ##
-        ########################################################################
-        ##
-        IDX <- peakXmsp[, 1]
-        RTX <- peakXmsp[, 2]
-        SX <- peakXmsp[, 3]
-        ##
-        ########################################################################
-        ##
-        peakXlist <- foreach(i = 1:LXDF, .verbose = FALSE) %dopar% {
-          px <- peakXmsp[i, 4:Lsamples]
-          px[px != 0]
-        }
-        ##
-        names(peakXlist) <- as.character(IDX)
-        ##
-        peakXmsp <- NULL
-        ##
-        ########################################################################
-        ##
-        FSA_logRecorder("Initiated calculating Tanimoto coefficients!")
-        ##
-        IDTC <- foreach(i = 1:LXDF, .combine = 'rbind', .verbose = FALSE) %dopar% {
-          call_IDTC(i)
-        }
-        ##
-      } else {
-        ##
-        IDTC <- NULL
-      }
-      ##########################################################################
-      ##
-      stopCluster(clust)
     }
   }
   ##############################################################################
@@ -391,23 +412,24 @@ CSA_alignedPeaksTanimotoCoefficientCalculator <- function(address_input_msp, pea
       ##
     } else {
       ##
-      if (osType == "Linux") {
+      if (osType == "Windows") {
+        ##
+        clust <- makeCluster(number_processing_threads)
+        clusterExport(clust, c("call_listXIDTC", "idtIDTC", "IDTC"), envir = environment())
+        ##
+        listXIDTC <- parLapply(clust, 1:LidtIDTC, function(i) {
+          call_listXIDTC(i)
+        })
+        ##
+        stopCluster(clust)
+        ##
+      } else {
         listXIDTC <- mclapply(1:LidtIDTC, function(i) {
           call_listXIDTC(i)
         }, mc.cores = number_processing_threads)
         ##
         closeAllConnections()
         ##
-      } else if (osType == "Windows") {
-        ##
-        clust <- makeCluster(number_processing_threads)
-        registerDoParallel(clust)
-        ##
-        listXIDTC <- foreach(i = 1:LidtIDTC, .verbose = FALSE) %dopar% {
-          call_listXIDTC(i)
-        }
-        ##
-        stopCluster(clust)
       }
     }
     ##
