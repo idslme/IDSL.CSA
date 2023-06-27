@@ -88,6 +88,6 @@ IDSL.CSA_workflow("Address of the CSA parameter spreadsheet")
 
 ## Citation
 
-[1] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL.CSA: Composite Spectra Analysis for Chemical Annotation of Untargeted Metabolomics Datasets](https://doi.org/10.1101/2023.02.09.527886). *bioRxiv*, **2023**.
+[1] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL.CSA: Composite Spectra Analysis for Chemical Annotation of Untargeted Metabolomics Datasets](https://doi.org/10.1021/acs.analchem.3c00376). *Analytical Chemistry*, **2023**, *95(25)*, 9480–9487.
 
 [2] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL. IPA characterizes the organic chemical space in untargeted LC/HRMS datasets](https://pubs.acs.org/doi/10.1021/acs.jproteome.2c00120). *Journal of proteome research*, **2022**, *21(6)*, 1485-1494.
