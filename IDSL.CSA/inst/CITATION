@@ -12,6 +12,6 @@ bibentry(bibtype = "Article",
          paste0("Fakouri Baygi et. al.,\n",
                "IDSL.CSA: Composite Spectra Analysis for Chemical Annotation of Untargeted Metabolomics Datasets\n",
                "Analytical Chemistry, 2023, 95(25), 9480–9487, doi:10.1021/acs.analchem.3c00376\n"),
-         header = "To cite IDSL.FSA in publications, please use:",
+         header = "To cite IDSL.CSA in publications, please use:",
          footer = "We appreciate citing our manuscript to gain visibility in the scientific community!"
         )
