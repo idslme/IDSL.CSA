@@ -5,7 +5,7 @@
 [![CRAN status](https://www.r-pkg.org/badges/version/IDSL.CSA)](https://cran.r-project.org/package=IDSL.CSA)
 ![](http://cranlogs.r-pkg.org/badges/IDSL.CSA?color=orange)
 ![](http://cranlogs.r-pkg.org/badges/grand-total/IDSL.CSA?color=brightgreen)
-[![Dependencies](https://tinyverse.netlify.com/badge/IDSL.CSA)](https://cran.r-project.org/package=IDSL.CSA)
+[![Dependencies](<https://tinyverse.netlify.app/badge/IDSL.CSA>)](<https://cran.r-project.org/package=IDSL.CSA>)
 <!-- badges: end -->
 
 The **Composite Spectra Analysis (IDSL.CSA)** R package for the analysis of mass spectrometry data has been developed by the [**Integrated Data Science Laboratory for Metabolomics and Exposomics (IDSL.ME)**](https://www.idsl.me/). This package can be used for the deconvolution of fragmentation spectra obtained through various analytical methods such as MS1-only Composite Spectra deconvolution Analysis (**CSA**), Data Dependent Acquisition (**DDA**), and a various Data-Independent Acquisition (**DIA**) methods including MS<sup>E</sup>, All-Ion Fragmentation (AIF), and SWATH-MS analyses. The aim of the **IDSL.CSA** package is to assist in streamlining the data analysis process and improving the overall chemical structure annotation in the fields of metabolomics and exposomics.
@@ -88,6 +88,6 @@ IDSL.CSA_workflow("Address of the CSA parameter spreadsheet")
 
 ## Citation
 
-[1] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL.CSA: Composite Spectra Analysis for Chemical Annotation of Untargeted Metabolomics Datasets](https://doi.org/10.1021/acs.analchem.3c00376). *Analytical Chemistry*, **2023**, *95(25)*, 9480–9487.
+[1] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL.CSA: Composite Spectra Analysis for Chemical Annotation of Untargeted Metabolomics Datasets](https://doi.org/10.1021/acs.analchem.3c00376). *Analytical Chemistry*, **2023**, *95(25)*, 9480ï¿½9487.
 
 [2] Fakouri Baygi, S., Kumar, Y. Barupal, D.K. [IDSL. IPA characterizes the organic chemical space in untargeted LC/HRMS datasets](https://pubs.acs.org/doi/10.1021/acs.jproteome.2c00120). *Journal of proteome research*, **2022**, *21(6)*, 1485-1494.
