@@ -187,7 +187,7 @@ CSA_workflow <- function(PARAM_CSA) {
       FSA_logRecorder("Completed subsetting the `alignedPeakHeightTableCorrelationList.Rdata`!")
       ##
     } else {
-      stop(FSA_logRecorder("`CSA0016` was not detected"))
+      stop(FSA_logRecorder("`CSA0012` was not detected"))
     }
     ##
     RTtolerance <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0013'), 2])
@@ -321,7 +321,7 @@ CSA_workflow <- function(PARAM_CSA) {
         clust <- makeCluster(NPT)
         clusterExport(clust, setdiff(ls(), c("clust", "file_name_hrms")), envir = environment())
         ##
-        null_variable <- parLapply(clust, file_name_hrms, function(iHRMSfilename) {
+        null_variable <- parLapplyLB(clust, file_name_hrms, function(iHRMSfilename) {
           ##
           tryCatch(call_CSA_workflow(iHRMSfilename),
                    error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
@@ -335,7 +335,7 @@ CSA_workflow <- function(PARAM_CSA) {
           ##
           tryCatch(call_CSA_workflow(iHRMSfilename),
                    error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
-        }, mc.cores = NPT)
+        }, mc.cores = NPT, mc.preschedule = FALSE)
         ##
         closeAllConnections()
         ##
@@ -368,10 +368,13 @@ CSA_workflow <- function(PARAM_CSA) {
   ##############################################################################
   ##
   if (CSA0002 == "yes") {
-    massError <- tryCatch(as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0016'), 2]), warning = function(w) {as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0025'), 2])})
-    plotSpectra <- if (tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0024'), 2]) == "yes") {TRUE} else {FALSE}
-    allowedWeightedSpectralEntropy <- eval(parse(text = (PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0028'), 2])))
+    massError <- tryCatch(as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0016'), 2]), warning = function(w) {FSA_logRecorder("It requires to provide mass accuracy (Da) in `CSA0016`!")})
+    plotSpectra <- if (tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0025'), 2]) == "yes") {TRUE} else {FALSE}
+    RTtolerance <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0026'), 2])
+    allowedWeightedSpectralEntropy <- grepl("t", tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0027'), 2]))
+    noiseRemovalRatio <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0028'), 2])/100
     minEntropySimilarity <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0029'), 2])
+    minCosineSimilarity <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0030'), 2])
     ##
     if (refMSPcreationCheck) {
       if (file.exists(paste0(output_address, "/", mspFileName))) {
@@ -384,8 +387,9 @@ CSA_workflow <- function(PARAM_CSA) {
         }
         FSA_logRecorder(paste0("The meta-variable for aggregation is `", aggregateBy, "`!"))
         ##
-        listSimilarMSPvariants <- FSA_uniqueMSPblockTagger(path = output_address, MSPfile = mspFileName, aggregateBy, massError, RTtolerance = NA, minEntropySimilarity,
-                                                           allowedNominalMass = FALSE, allowedWeightedSpectralEntropy, noiseRemovalRatio = 0, plotSpectra, number_processing_threads = NPT)
+        listSimilarMSPvariants <- FSA_uniqueMSPblockTaggerTargeted(path = output_address, MSPfile = mspFileName, aggregateBy, massError, RTtolerance, minEntropySimilarity,
+                                                                   noiseRemovalRatio, minCosineSimilarity, allowedNominalMass = FALSE, allowedWeightedSpectralEntropy,
+                                                                   plotSpectra, number_processing_threads = NPT)
         FSA_logRecorder(paste0("Indices of similar MSP blocks for each compound are stored as `listSimilarMSPvariants.Rdata` in the `", output_address,"` folder!"))
         save(listSimilarMSPvariants, file = paste0(output_address, "/listSimilarMSPvariants.Rdata"))
         FSdb_address <- paste0(output_address, "/uniqueMSPtags_", gsub("[.]msp$|[.]Rdata$", ".Rdata", mspFileName, ignore.case = TRUE))
@@ -397,13 +401,18 @@ CSA_workflow <- function(PARAM_CSA) {
       ##
     } else {
       ##
-      RTtoleranceRef <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0026'), 2])
-      minCSAdetectionFrequency <- floor(as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0027'), 2])*LHRMS/100)
+      peak_alignment_folder <- PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0009'), 2]
+      if (!dir.exists(peak_alignment_folder)) {
+        peak_alignment_folder <- NA
+      }
+      ##
+      minCSAdetectionFrequency <- floor(as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0024'), 2])*LHRMS/100)
       MSPfile_vector <- dir(path = output_CSA_MSP, pattern = ".msp$", ignore.case = TRUE)
       ##
       FSA_logRecorder("Initiated detecting unique CSA variants!")
-      FSA_uniqueMSPblockTaggerUntargeted(path = output_CSA_MSP, MSPfile_vector, minCSAdetectionFrequency, minEntropySimilarity, massError, massErrorPrecursor = NA, RTtoleranceRef,
-                                         noiseRemovalRatio = 0, allowedNominalMass = FALSE, allowedWeightedSpectralEntropy, plotSpectra, number_processing_threads = NPT)
+      FSA_uniqueMSPblockTaggerUntargeted(path = output_CSA_MSP, MSPfile_vector, peak_alignment_folder, minCSAdetectionFrequency, massError, massErrorPrecursor = NA,
+                                         RTtolerance, minEntropySimilarity, noiseRemovalRatio, minCosineSimilarity, allowedNominalMass = FALSE,
+                                         allowedWeightedSpectralEntropy, plotSpectra, number_processing_threads = NPT)
       FSdb_address <- paste0(output_CSA_MSP, "/UNIQUETAGS/uniqueMSPtagsUntargeted.Rdata")
       FSA_logRecorder("Completed detecting unique CSA variants!")
     }
@@ -460,10 +469,10 @@ CSA_workflow <- function(PARAM_CSA) {
       peakXcol_FN <- paste0(peak_alignment_folder, "/peakXcol.Rdata")
       peakXcol <- IDSL.IPA::loadRdata(peakXcol_FN)
       ##
-      RTtolerance_AT <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0030'), 2])
-      minPercenetageDetection <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0031'), 2])
-      minNumberFragments <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0032'), 2])
-      minTanimotoCoefficient1 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0033'), 2])
+      RTtolerance_AT <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0031'), 2])
+      minPercenetageDetection <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0032'), 2])
+      minNumberFragments <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0033'), 2])
+      minTanimotoCoefficient1 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0034'), 2])
       ##
       codetectedIDTC <- CSA_alignedPeaksTanimotoCoefficientCalculator(output_CSA_MSP, peakXcol, minPercenetageDetection, minNumberFragments,
                                                                       minTanimotoCoefficient1, RTtolerance_AT, number_processing_threads = NPT)
@@ -486,9 +495,9 @@ CSA_workflow <- function(PARAM_CSA) {
       ##
       ##########################################################################
       ##
-      minTanimotoCoefficient2 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0034'), 2])
-      massError <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0036'), 2])
-      allowedWeightedSpectralEntropy <- eval(parse(text = PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0037'), 2]))
+      minTanimotoCoefficient2 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0035'), 2])
+      massError <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0037'), 2])
+      allowedWeightedSpectralEntropy <- eval(parse(text = PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0038'), 2]))
       ##
       listCSAaverageAlignedSpectra <- CSA_alignedMetaSpectraCataloger(output_CSA_MSP, peakXcol, peak_height, CSA_aligned_table, codetectedIDTC,
                                                                       minTanimotoCoefficient2, number_processing_threads = NPT)
@@ -522,8 +531,8 @@ CSA_workflow <- function(PARAM_CSA) {
       #################### Plot aligned CSA variant spectra ####################
       ##########################################################################
       ##
-      CSA0035 <- tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0035'), 2])
-      if (CSA0035 == "yes") {
+      CSA0036 <- tolower(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0036'), 2])
+      if (CSA0036 == "yes") {
         alignedCSAvariantFolder <- paste0(output_path_aligned_table_integrated, "/spectra_folder/")
         ##
         FSA_logRecorder(paste0("Tanimato integrated aligned CSA spectra figures are stored in the `", output_path_aligned_table_integrated,"` folder!"))
@@ -545,7 +554,7 @@ CSA_workflow <- function(PARAM_CSA) {
       ########################### Cytoscape network ############################
       ##########################################################################
       ##
-      minEntropySimilarity_AT <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0038'), 2])
+      minEntropySimilarity_AT <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0039'), 2])
       ##
       ##########################################################################
       ##
@@ -622,7 +631,7 @@ CSA_workflow <- function(PARAM_CSA) {
         }
       }
       ##
-      FSdb_file <- as.character(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0039'), 2])
+      FSdb_file <- as.character(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0040'), 2])
       FSdb_file <- gsub("\\", "/", FSdb_file, fixed = TRUE)
       ##
       if (file.exists(FSdb_file)) {
@@ -632,7 +641,7 @@ CSA_workflow <- function(PARAM_CSA) {
         alignedTableMSPabundantCheck <- (length(dir(path = output_path_aligned_table_abundant, pattern = ".msp$", ignore.case = TRUE)) > 0)
         ##
         if (alignedTableIntegratedMSPcheck | alignedTableMSPabundantCheck) {
-          FSA_logRecorder("Initiated annotating `.msp` network of spectra using FSDB in the CSA0039 using default values!")
+          FSA_logRecorder("Initiated annotating `.msp` network of spectra using FSDB in the CSA0040 using default values!")
           ######################################################################
           PARAM_SPEC <- IDSL.IPA::loadRdata(paste0(system.file("data", package = "IDSL.CSA"), "/CSA_PARAM_SPEC.rda"))
           ##
@@ -701,7 +710,7 @@ CSA_workflow <- function(PARAM_CSA) {
           ######################################################################
           ##
           if (exists('annotatationTable')) {
-            FSA_logRecorder("Completed annotating `.msp` network of spectra using FSDB in the CSA0039 using default values!")
+            FSA_logRecorder("Completed annotating `.msp` network of spectra using FSDB in the CSA0040 using default values!")
             FSA_logRecorder("Stored annotated `node_attributes_dataFrame.txt` files for network analysis by Cytoscape software!")
           }
         }
@@ -725,5 +734,5 @@ CSA_workflow <- function(PARAM_CSA) {
   ##
   ##############################################################################
   ##
-  return()
+  return(output_CSA_MSP)
 }

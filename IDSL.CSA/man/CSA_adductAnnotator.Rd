@@ -4,7 +4,7 @@
 CSA Adduct Annotator
 }
 \description{
-This function updates IDSL.IPA peaklists with IDSL.CSA grouping
+This function updates IDSL.IPA peak lists with IDSL.CSA composite spectra grouping to facilitate the observation of co-occurring IDSL.IPA peaks.
 }
 \usage{
 CSA_adductAnnotator(IPApeakList, CSA_peaklist, massError)

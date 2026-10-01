@@ -41,7 +41,7 @@ DDA2msp <- function(input_path_hrms, file_name_hrms = NULL, number_processing_th
       clust <- makeCluster(NPT0)
       clusterExport(clust, setdiff(ls(), c("clust", "file_name_hrms")), envir = environment())
       ##
-      null_variable <- parLapply(clust, file_name_hrms, function(i) {
+      null_variable <- parLapplyLB(clust, file_name_hrms, function(i) {
         ##
         tryCatch(call_DDA2msp(input_path_hrms, iHRMSfilename = i),
                  error = function(e) {FSA_message(paste0("Problem with `", i, "`!"))})
@@ -55,7 +55,7 @@ DDA2msp <- function(input_path_hrms, file_name_hrms = NULL, number_processing_th
         ##
         tryCatch(call_DDA2msp(input_path_hrms, iHRMSfilename = i),
                  error = function(e) {FSA_message(paste0("Problem with `", i, "`!"))})
-      }, mc.cores = NPT0)
+      }, mc.cores = NPT0, mc.preschedule = FALSE)
       ##
       closeAllConnections()
       ##

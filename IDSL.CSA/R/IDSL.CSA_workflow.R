@@ -33,6 +33,8 @@ IDSL.CSA_workflow <- function(spreadsheet) {
   PARAM_Start <- PARAM_total[["PARAM_Start"]]
   PARAM_FSdb <- PARAM_total[["PARAM_FSdb"]]
   ##
+  unique_tag_msp_folder <- ""
+  ##
   if (!is.null(PARAM_Start)) {
     CSA <- tolower(PARAM_Start[which(PARAM_Start[, 1] == 'PARAM0001'), 2])
     DDA <- tolower(PARAM_Start[which(PARAM_Start[, 1] == 'PARAM0002'), 2])
@@ -41,7 +43,7 @@ IDSL.CSA_workflow <- function(spreadsheet) {
     if (CSA == "yes") {
       PARAM_CSA <- PARAM_total[["PARAM_CSA"]]
       if (length(PARAM_CSA) > 0) {
-        CSA_workflow(PARAM_CSA)
+        output_msp_folder <- CSA_workflow(PARAM_CSA)
       } else {
         stop()
       }
@@ -49,7 +51,7 @@ IDSL.CSA_workflow <- function(spreadsheet) {
     } else if (DDA == "yes") {
       PARAM_DDA <- PARAM_total[["PARAM_DDA"]]
       if (length(PARAM_DDA) > 0) {
-        DDA_workflow(PARAM_DDA)
+        output_msp_folder <- DDA_workflow(PARAM_DDA)
       } else {
         stop()
       }
@@ -58,7 +60,7 @@ IDSL.CSA_workflow <- function(spreadsheet) {
       ##
       PARAM_DIA <- PARAM_total[["PARAM_DIA"]]
       if (length(PARAM_DIA) > 0) {
-        DIA_workflow(PARAM_DIA)
+        output_msp_folder <- DIA_workflow(PARAM_DIA)
       } else {
         stop()
       }
@@ -112,18 +114,60 @@ IDSL.CSA_workflow <- function(spreadsheet) {
     ##
     ############################################################################
     ##
+    address_input_msp <- PARAM_Start[which(PARAM_Start[, 1] == 'PARAM0008'), 2]
+    ##
+    unique_tag_msp_folder <- paste0(address_input_msp, "/UNIQUETAGS")
+    ##
     if (PARAM0005 == "yes") {
-      address_input_msp <- PARAM_Start[which(PARAM_Start[, 1] == 'PARAM0008'), 2]
+      ##
       PARAM_SPEC <- PARAM_total[["PARAM_SPEC"]]
       ##
+      if (dir.exists(unique_tag_msp_folder)) {
+        ##
+        FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
+        FSA_logRecorder(paste0("Started annotating the unique untargeted .msp file `", unique_tag_msp_folder, "`!"))
+        ##
+        PARAM_SPEC_uniqueTag <- PARAM_SPEC
+        PARAM_SPEC_uniqueTag[PARAM_SPEC_uniqueTag[, 1] == "SPEC0002", 2] <- "peakmode"
+        ##
+        FSA_msp_annotator(PARAM_SPEC_uniqueTag, libFSdb, address_input_msp = unique_tag_msp_folder, output_path = unique_tag_msp_folder, allowedVerbose = FALSE)
+        ##
+        FSA_logRecorder(paste0("Completed annotating the unique untargeted .msp file`", unique_tag_msp_folder, "/annotated_spectra_tables`!"))
+        FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
+        ##
+      }
+      ##
       FSA_msp_annotator(PARAM_SPEC, libFSdb, address_input_msp, output_path)
+      libFSdb <- NULL
     }
     ##
     ############################################################################
     ##
     if (PARAM0006 == "yes") {
-      libFSdb <- NULL
       PARAM_AT <- PARAM_total[["PARAM_AT"]]
+      ##
+      if (dir.exists(unique_tag_msp_folder)) {
+        ##
+        annotatedUniqueTag <- paste0(unique_tag_msp_folder, "/annotated_spectra_tables/SpectraAnnotationTable_uniqueMSPtagsUntargeted.msp.Rdata")
+        ##
+        if (file.exists(annotatedUniqueTag)) {
+          ##
+          FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
+          ##
+          peak_alignment_folder <- PARAM_AT[which(PARAM_AT[, 1] == 'AT0001'), 2]
+          uat_sortingMetavariable <- "matchedRank"
+          uat_metaVariables <- do.call(c, lapply(7:9, function(uat) {tolower(PARAM_AT[which(PARAM_AT[, 1] == paste0("AT000", uat)), 2])}))
+          uat_nCandidateCompounds <- as.numeric(PARAM_AT[which(PARAM_AT[, 1] == 'AT0004'), 2])
+          uat_number_processing_threads <- as.numeric(PARAM_AT[which(PARAM_AT[, 1] == "AT0002"), 2])
+          ##
+          IDSL.FSA::FSA_uniqueTagPeakXcol(unique_tag_msp_folder, peak_alignment_folder, uat_sortingMetavariable,
+                                          uat_metaVariables, uat_nCandidateCompounds, uat_number_processing_threads)
+          ##
+          FSA_logRecorder(paste0(rep("", 100), collapse = "-"))
+          ##
+        }
+      }
+      ##
       aligned_fragmentation_spectra_annotator(PARAM_AT, output_path)
     }
     ##

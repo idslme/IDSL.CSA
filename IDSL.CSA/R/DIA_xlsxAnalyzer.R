@@ -12,7 +12,7 @@ DIA_xlsxAnalyzer <- function(spreadsheet) {
       checkpoint_parameter <- TRUE
       ##
     } else {
-      FSA_message("The DIA spreadsheet tab was not produced properly!")
+      FSA_message("The `DIA` spreadsheet tab was not produced properly!")
     }
   } else if (typeof(spreadsheet) == "character") {
     if (length(spreadsheet) == 1) {
@@ -29,6 +29,8 @@ DIA_xlsxAnalyzer <- function(spreadsheet) {
   } else {
     FSA_message("The DIA spreadsheet tab was not produced properly!")
   }
+  ##
+  PARAM_DIA <- PARAM_DIA[which(grepl("^DIA", PARAM_DIA[, 1])), ]
   ##############################################################################
   if (checkpoint_parameter == TRUE) {
     ##
@@ -371,66 +373,60 @@ DIA_xlsxAnalyzer <- function(spreadsheet) {
     #### Unique tag aggregation by spectra similarity across entire samples ####
     ############################################################################
     if (DIA0002 == "yes") {
-      x0023 <- which(PARAM_DIA[, 1] == 'DIA0023')
-      DIA0023 <- PARAM_DIA[x0023, 2]
-      if (is.na(DIA0023)) {
-        FSA_message("ERROR!!! Problem with DIA0023!")
-        checkpoint_parameter <- FALSE
-      } else {
-        DIA0023 <- gsub(" ", "", tolower(DIA0023))
-        if (DIA0023 == "yes" | DIA0023 == "no") {
-          PARAM_DIA[x0023, 2] <- DIA0023
-        } else {
-          FSA_message("ERROR!!! Problem with DIA0023!")
-          checkpoint_parameter <- FALSE
-        }
-      }
       ##
-      if (refMSPcreationCheck) {
-        massErrorRef <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0024'), 2])
-        if (length(massErrorRef) == 0) {
-          FSA_message("ERROR!!! Problem with DIA0024! This parameter should be a positive number!")
+      if (!refMSPcreationCheck) { ## UnTargeted
+        minDIAdetectionFrequency <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0023'), 2])
+        if (length(minDIAdetectionFrequency) == 0) {
+          FSA_message("ERROR!!! Problem with DIA0023! This parameter should be a positive number between 0 - 100!")
           checkpoint_parameter <- FALSE
         } else {
-          if (massErrorRef < 0) {
-            FSA_message("ERROR!!! Problem with DIA0024! This parameter should be a positive number!")
+          if (!((minDIAdetectionFrequency >= 0) & (minDIAdetectionFrequency <= 100))) {
+            FSA_message("ERROR!!! Problem with DIA0023! This parameter should be a positive number between 0 - 100!")
             checkpoint_parameter <- FALSE
           }
         }
       }
       ##
-      RTtoleranceRef <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0025'), 2])
-      if (length(RTtoleranceRef) == 0) {
+      x0024 <- which(PARAM_DIA[, 1] == 'DIA0024')
+      DIA0024 <- PARAM_DIA[x0024, 2]
+      if (is.na(DIA0024)) {
+        FSA_message("ERROR!!! Problem with DIA0024!")
+        checkpoint_parameter <- FALSE
+      } else {
+        DIA0024 <- gsub(" ", "", tolower(DIA0024))
+        if (DIA0024 == "yes" | DIA0024 == "no") {
+          PARAM_DIA[x0024, 2] <- DIA0024
+        } else {
+          FSA_message("ERROR!!! Problem with DIA0024!")
+          checkpoint_parameter <- FALSE
+        }
+      }
+      ##
+      RTtolerance <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0025'), 2])
+      if (length(RTtolerance) == 0) {
         FSA_message("ERROR!!! Problem with DIA0025! This parameter should be a positive number!")
         checkpoint_parameter <- FALSE
       } else {
-        if (RTtoleranceRef < 0) {
+        if (RTtolerance < 0) {
           FSA_message("ERROR!!! Problem with DIA0025! This parameter should be a positive number!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      if (!refMSPcreationCheck) {
-        minDIAdetectionFrequency <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0026'), 2])
-        if (length(minDIAdetectionFrequency) == 0) {
-          FSA_message("ERROR!!! Problem with DIA0026! This parameter should be a positive number between 0 - 100!")
+      x0026 <- which(PARAM_DIA[, 1] == 'DIA0026')
+      allowedWeightedSpectralEntropy <- grepl("t", tolower(PARAM_DIA[x0026, 2]))
+      PARAM_DIA[x0026, 2] <- allowedWeightedSpectralEntropy
+      ##
+      noiseRemovalRatio <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0027'), 2])
+      if (length(noiseRemovalRatio) == 0) {
+        FSA_message("ERROR!!! Problem with DIA0027! This parameter should be a positive number between 0 - 100!")
+        checkpoint_parameter <- FALSE
+      } else {
+        if (!((noiseRemovalRatio >= 0) & (noiseRemovalRatio <= 100))) {
+          FSA_message("ERROR!!! Problem with DIA0027! This parameter should be a positive number between 0 - 100!")
           checkpoint_parameter <- FALSE
-        } else {
-          if (!((minDIAdetectionFrequency > 0) & (minDIAdetectionFrequency < 100))) {
-            FSA_message("ERROR!!! Problem with DIA0026! This parameter should be a positive number between 0 - 100!")
-            checkpoint_parameter <- FALSE
-          }
         }
       }
-      ##
-      x0027 <- which(PARAM_DIA[, 1] == 'DIA0027')
-      allowedWeightedSpectralEntropy <- tolower(gsub(" ", "", PARAM_DIA[x0027, 2]))
-      if (allowedWeightedSpectralEntropy == "1" | allowedWeightedSpectralEntropy == "t" | allowedWeightedSpectralEntropy == "true") {
-        allowedWeightedSpectralEntropy <- TRUE
-      } else {
-        allowedWeightedSpectralEntropy <- FALSE
-      }
-      PARAM_DIA[x0027, 2] <- allowedWeightedSpectralEntropy
       ##
       minEntropySimilarity <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0028'), 2])
       if (length(minEntropySimilarity) == 0) {
@@ -439,6 +435,17 @@ DIA_xlsxAnalyzer <- function(spreadsheet) {
       } else {
         if (!((minEntropySimilarity >= 0) & (minEntropySimilarity <= 1))) {
           FSA_message("ERROR!!! Problem with DIA0028! This parameter should be a positive number between 0 - 1!")
+          checkpoint_parameter <- FALSE
+        }
+      }
+      ##
+      minCosineSimilarity <- as.numeric(PARAM_DIA[which(PARAM_DIA[, 1] == 'DIA0029'), 2])
+      if (length(minCosineSimilarity) == 0) {
+        FSA_message("ERROR!!! Problem with DIA0029! This parameter should be a positive number between 0 - 1!")
+        checkpoint_parameter <- FALSE
+      } else {
+        if (!((minCosineSimilarity >= 0) & (minCosineSimilarity <= 1))) {
+          FSA_message("ERROR!!! Problem with DIA0029! This parameter should be a positive number between 0 - 1!")
           checkpoint_parameter <- FALSE
         }
       }

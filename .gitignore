@@ -37,3 +37,6 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Ignore ALL .ini files in any directory or subdirectory
+*.ini

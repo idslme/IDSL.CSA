@@ -25,7 +25,7 @@ temp_wd <- tempdir()
 temp_wd_zip <- paste0(temp_wd, "/idsl_dda_test_files.zip")
 spreadsheet <- readxl::read_xlsx(SSh1, sheet = "DDA")
 PARAM_DDA <- cbind(spreadsheet[, 2], spreadsheet[, 4])
-download.file(paste0("https://github.com/idslme/IDSL.CSA/blob/main/",
+download.file(paste0("https://github.com/idslme/IDSL.CSA/raw/refs/heads/main/",
                      "CSA_educational_files/idsl_dda_test_files.zip?raw=true"),
               destfile = temp_wd_zip, mode = "wb")
 unzip(temp_wd_zip, exdir = temp_wd)

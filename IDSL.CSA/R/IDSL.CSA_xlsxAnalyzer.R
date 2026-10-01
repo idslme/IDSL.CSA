@@ -317,6 +317,7 @@ IDSL.CSA_xlsxAnalyzer <- function(spreadsheet) {
           }
         }
       } else {
+        xCSA0011 <- which(PARAM_CSA[, 1] == 'CSA0011')
         if (PARAM0001 == "yes") {
           output_path_sample <- PARAM_CSA[xCSA0011, 2]
           output_path_sample <- gsub("\\", "/", output_path_sample, fixed = TRUE)

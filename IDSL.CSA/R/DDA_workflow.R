@@ -1,5 +1,7 @@
 DDA_workflow <- function(PARAM_DDA) {
   ##
+  uniqueTagUntargetedInfo <- NULL
+  ##
   if (length(PARAM_DDA) == 1) {
     if (typeof(PARAM_DDA) == "character") {
       stop("Please use `IDSL.CSA_workflow('spreadsheet')` to use the IDSL.CSA package!")
@@ -326,7 +328,7 @@ DDA_workflow <- function(PARAM_DDA) {
         clust <- makeCluster(NPT0)
         clusterExport(clust, setdiff(ls(), c("clust", "file_name_hrms")), envir = environment())
         ##
-        null_variable <- parLapply(clust, file_name_hrms, function(iHRMSfilename) {
+        null_variable <- parLapplyLB(clust, file_name_hrms, function(iHRMSfilename) {
           ##
           tryCatch(DDA_workflow_call(iHRMSfilename),
                    error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
@@ -340,7 +342,7 @@ DDA_workflow <- function(PARAM_DDA) {
           ##
           tryCatch(DDA_workflow_call(iHRMSfilename),
                    error = function(e) {FSA_logRecorder(paste0("Problem with `", iHRMSfilename,"`!"))})
-        }, mc.cores = NPT0)
+        }, mc.cores = NPT0, mc.preschedule = FALSE)
         ##
         closeAllConnections()
         ##
@@ -368,10 +370,13 @@ DDA_workflow <- function(PARAM_DDA) {
   ##############################################################################
   ##
   if (DDA0002 == "yes") {
-    massError <- tryCatch(as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == "DDA0015"), 2]), warning = function(w) {as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0021'), 2])})
-    plotSpectra <- if (tolower(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0020'), 2]) == "yes") {TRUE} else {FALSE}
-    allowedWeightedSpectralEntropy <- eval(parse(text = (PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0024'), 2])))
+    massError <- tryCatch(as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0015'), 2]), warning = function(w) {FSA_logRecorder("It requires to provide mass accuracy (Da) in `DDA0015`!")})
+    plotSpectra <- if (tolower(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0021'), 2]) == "yes") {TRUE} else {FALSE}
+    RTtolerance <- as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0022'), 2])
+    allowedWeightedSpectralEntropy <- grepl("t", tolower(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0023'), 2]))
+    noiseRemovalRatio <- as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0024'), 2])/100
     minEntropySimilarity <- as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0025'), 2])
+    minCosineSimilarity <- as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0026'), 2])
     ##
     if (refMSPcreationCheck) {
       if (file.exists(paste0(output_address, "/", mspFileName))) {
@@ -384,8 +389,9 @@ DDA_workflow <- function(PARAM_DDA) {
         }
         FSA_logRecorder(paste0("The meta-variable for aggregation is `", aggregateBy, "`!"))
         ##
-        listSimilarMSPvariants <- FSA_uniqueMSPblockTagger(path = output_address, MSPfile = mspFileName, aggregateBy, massError, RTtolerance = NA, minEntropySimilarity,
-                                                           allowedNominalMass = FALSE, allowedWeightedSpectralEntropy, noiseRemovalRatio = 0, plotSpectra, number_processing_threads = NPT)
+        listSimilarMSPvariants <- FSA_uniqueMSPblockTaggerTargeted(path = output_address, MSPfile = mspFileName, aggregateBy, massError, RTtolerance, minEntropySimilarity,
+                                                                   noiseRemovalRatio, minCosineSimilarity, allowedNominalMass = FALSE, allowedWeightedSpectralEntropy,
+                                                                   plotSpectra, number_processing_threads = NPT)
         FSA_logRecorder(paste0("Indices of similar MSP blocks for each compound are stored as `listSimilarMSPvariants.Rdata` in the `", output_address,"` folder!"))
         save(listSimilarMSPvariants, file = paste0(output_address, "/listSimilarMSPvariants.Rdata"))
         FSdb_address <- paste0(output_address, "/uniqueMSPtags_", gsub("[.]msp$|[.]Rdata$", ".Rdata", mspFileName, ignore.case = TRUE))
@@ -397,14 +403,19 @@ DDA_workflow <- function(PARAM_DDA) {
       ##
     } else {
       ##
+      peak_alignment_folder <- PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0008'), 2]
+      if (!dir.exists(peak_alignment_folder)) {
+        peak_alignment_folder <- NA
+      }
+      ##
       massErrorPrecursor <- tryCatch(as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == "DDA0013"), 2]), error = function(e) {massError})
-      RTtoleranceRef <- as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0022'), 2])
-      minDDAdetectionFrequency <- floor(as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0023'), 2])*LHRMS/100)
+      minDDAdetectionFrequency <- floor(as.numeric(PARAM_DDA[which(PARAM_DDA[, 1] == 'DDA0020'), 2])*LHRMS/100)
       MSPfile_vector <- dir(path = output_DDA_MSP, pattern = ".msp$", ignore.case = TRUE)
       ##
       FSA_logRecorder("Initiated detecting unique DDA variants!")
-      FSA_uniqueMSPblockTaggerUntargeted(path = output_DDA_MSP, MSPfile_vector, minDDAdetectionFrequency, minEntropySimilarity, massError, massErrorPrecursor, RTtoleranceRef,
-                                         noiseRemovalRatio = 0, allowedNominalMass = FALSE, allowedWeightedSpectralEntropy, plotSpectra, number_processing_threads = NPT)
+      FSA_uniqueMSPblockTaggerUntargeted(path = output_DDA_MSP, MSPfile_vector, peak_alignment_folder, minDDAdetectionFrequency, massError, massErrorPrecursor, RTtolerance,
+                                         minEntropySimilarity, noiseRemovalRatio, minCosineSimilarity, allowedNominalMass = FALSE, allowedWeightedSpectralEntropy,
+                                         plotSpectra, number_processing_threads = NPT)
       FSdb_address <- paste0(output_DDA_MSP, "/UNIQUETAGS/uniqueMSPtagsUntargeted.Rdata")
       FSA_logRecorder("Completed detecting unique DDA variants!")
     }
@@ -463,5 +474,5 @@ DDA_workflow <- function(PARAM_DDA) {
   ##
   ##############################################################################
   ##
-  return()
+  return(output_DDA_MSP)
 }

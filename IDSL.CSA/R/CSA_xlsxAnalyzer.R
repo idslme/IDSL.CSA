@@ -29,6 +29,8 @@ CSA_xlsxAnalyzer <- function(spreadsheet) {
   } else {
     FSA_message("The `CSA` spreadsheet tab was not produced properly!")
   }
+  ##
+  PARAM_CSA <- PARAM_CSA[which(grepl("^CSA", PARAM_CSA[, 1])), ]
   ##############################################################################
   if (checkpoint_parameter) {
     ##
@@ -373,66 +375,60 @@ CSA_xlsxAnalyzer <- function(spreadsheet) {
       ### Unique tag aggregation by spectra similarity across entire samples ###
       ##########################################################################
       if (CSA0002 == "yes") {
-        x0024 <- which(PARAM_CSA[, 1] == 'CSA0024')
-        CSA0024 <- PARAM_CSA[x0024, 2]
-        if (is.na(CSA0024)) {
-          FSA_message("ERROR!!! Problem with CSA0024!")
-          checkpoint_parameter <- FALSE
-        } else {
-          CSA0024 <- gsub(" ", "", tolower(CSA0024))
-          if (CSA0024 == "yes" | CSA0024 == "no") {
-            PARAM_CSA[x0024, 2] <- CSA0024
-          } else {
-            FSA_message("ERROR!!! Problem with CSA0024!")
-            checkpoint_parameter <- FALSE
-          }
-        }
         ##
-        if (refMSPcreationCheck) {
-          massErrorRef <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0025'), 2])
-          if (length(massErrorRef) == 0) {
-            FSA_message("ERROR!!! Problem with CSA0025! This parameter should be a positive number!")
+        if (!refMSPcreationCheck) { ## UnTargeted
+          minCSAdetectionFrequency <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0024'), 2])
+          if (length(minCSAdetectionFrequency) == 0) {
+            FSA_message("ERROR!!! Problem with CSA0024! This parameter should be a positive number between 0 - 100!")
             checkpoint_parameter <- FALSE
           } else {
-            if (massErrorRef < 0) {
-              FSA_message("ERROR!!! Problem with CSA0025! This parameter should be a positive number!")
+            if (!((minCSAdetectionFrequency >= 0) & (minCSAdetectionFrequency <= 100))) {
+              FSA_message("ERROR!!! Problem with CSA0024! This parameter should be a positive number between 0 - 100!")
               checkpoint_parameter <- FALSE
             }
           }
         }
         ##
-        RTtoleranceRef <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0026'), 2])
-        if (length(RTtoleranceRef) == 0) {
+        x0025 <- which(PARAM_CSA[, 1] == 'CSA0025')
+        CSA0025 <- PARAM_CSA[x0025, 2]
+        if (is.na(CSA0025)) {
+          FSA_message("ERROR!!! Problem with CSA0025!")
+          checkpoint_parameter <- FALSE
+        } else {
+          CSA0025 <- gsub(" ", "", tolower(CSA0025))
+          if (CSA0025 == "yes" | CSA0025 == "no") {
+            PARAM_CSA[x0025, 2] <- CSA0025
+          } else {
+            FSA_message("ERROR!!! Problem with CSA0025!")
+            checkpoint_parameter <- FALSE
+          }
+        }
+        ##
+        RTtolerance <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0026'), 2])
+        if (length(RTtolerance) == 0) {
           FSA_message("ERROR!!! Problem with CSA0026! This parameter should be a positive number!")
           checkpoint_parameter <- FALSE
         } else {
-          if (RTtoleranceRef < 0) {
+          if (RTtolerance < 0) {
             FSA_message("ERROR!!! Problem with CSA0026! This parameter should be a positive number!")
             checkpoint_parameter <- FALSE
           }
         }
         ##
-        if (!refMSPcreationCheck) {
-          minCSAdetectionFrequency <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0027'), 2])
-          if (length(minCSAdetectionFrequency) == 0) {
-            FSA_message("ERROR!!! Problem with CSA0027! This parameter should be a positive number between 0 - 100!")
+        x0027 <- which(PARAM_CSA[, 1] == 'CSA0027')
+        allowedWeightedSpectralEntropy <- grepl("t", tolower(PARAM_CSA[x0027, 2]))
+        PARAM_CSA[x0027, 2] <- allowedWeightedSpectralEntropy
+        ##
+        noiseRemovalRatio <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0028'), 2])
+        if (length(noiseRemovalRatio) == 0) {
+          FSA_message("ERROR!!! Problem with CSA0028! This parameter should be a positive number between 0 - 100!")
+          checkpoint_parameter <- FALSE
+        } else {
+          if (!((noiseRemovalRatio >= 0) & (noiseRemovalRatio <= 100))) {
+            FSA_message("ERROR!!! Problem with CSA0028! This parameter should be a positive number between 0 - 100!")
             checkpoint_parameter <- FALSE
-          } else {
-            if (!((minCSAdetectionFrequency > 0) & (minCSAdetectionFrequency < 100))) {
-              FSA_message("ERROR!!! Problem with CSA0027! This parameter should be a positive number between 0 - 100!")
-              checkpoint_parameter <- FALSE
-            }
           }
         }
-        ##
-        x0028 <- which(PARAM_CSA[, 1] == 'CSA0028')
-        allowedWeightedSpectralEntropy <- tolower(gsub(" ", "", PARAM_CSA[x0028, 2]))
-        if (allowedWeightedSpectralEntropy == "1" | allowedWeightedSpectralEntropy == "t" | allowedWeightedSpectralEntropy == "true") {
-          allowedWeightedSpectralEntropy <- TRUE
-        } else {
-          allowedWeightedSpectralEntropy <- FALSE
-        }
-        PARAM_CSA[x0028, 2] <- allowedWeightedSpectralEntropy
         ##
         minEntropySimilarity <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0029'), 2])
         if (length(minEntropySimilarity) == 0) {
@@ -441,6 +437,17 @@ CSA_xlsxAnalyzer <- function(spreadsheet) {
         } else {
           if (!((minEntropySimilarity >= 0) & (minEntropySimilarity <= 1))) {
             FSA_message("ERROR!!! Problem with CSA0029! This parameter should be a positive number between 0 - 1!")
+            checkpoint_parameter <- FALSE
+          }
+        }
+        ##
+        minCosineSimilarity <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0030'), 2])
+        if (length(minCosineSimilarity) == 0) {
+          FSA_message("ERROR!!! Problem with CSA0030! This parameter should be a positive number between 0 - 1!")
+          checkpoint_parameter <- FALSE
+        } else {
+          if (!((minCosineSimilarity >= 0) & (minCosineSimilarity <= 1))) {
+            FSA_message("ERROR!!! Problem with CSA0030! This parameter should be a positive number between 0 - 1!")
             checkpoint_parameter <- FALSE
           }
         }
@@ -456,125 +463,125 @@ CSA_xlsxAnalyzer <- function(spreadsheet) {
       checkpoint_parameter <- listAlignmentFolderCheck[[2]]
       listAlignmentFolderCheck <- NULL
       ##
-      RTtolerance_AT <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0030'), 2])
+      RTtolerance_AT <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0031'), 2])
       if (length(RTtolerance_AT) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0030! This parameter should be a positive number!")
+        FSA_message("ERROR!!! Problem with CSA0031! This parameter should be a positive number!")
         checkpoint_parameter <- FALSE
       } else {
         if (RTtolerance_AT <= 0) {
-          FSA_message("ERROR!!! Problem with CSA0030! This parameter should be a positive number!")
+          FSA_message("ERROR!!! Problem with CSA0031! This parameter should be a positive number!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      minPercenetageDetection <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0031'), 2])
+      minPercenetageDetection <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0032'), 2])
       if (length(minPercenetageDetection) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0031! This parameter should be a positive numberbetween 0-100!")
+        FSA_message("ERROR!!! Problem with CSA0032! This parameter should be a positive numberbetween 0-100!")
         checkpoint_parameter <- FALSE
       } else {
         if (minPercenetageDetection < 0 | minPercenetageDetection > 100) {
-          FSA_message("ERROR!!! Problem with CSA0031! This parameter should be a positive number between 0-100!")
+          FSA_message("ERROR!!! Problem with CSA0032! This parameter should be a positive number between 0-100!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      minNumberFragments <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0032'), 2])
+      minNumberFragments <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0033'), 2])
       if (length(minNumberFragments) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0032! This parameter should be a positive integer >= 2 !")
+        FSA_message("ERROR!!! Problem with CSA0033! This parameter should be a positive integer >= 2 !")
         checkpoint_parameter <- FALSE
       } else {
         if (minNumberFragments >= 2) {
           if ((minNumberFragments %% 1) != 0) {
-            FSA_message("ERROR!!! Problem with CSA0032! This parameter should be a positive integer >= 2 !")
+            FSA_message("ERROR!!! Problem with CSA0033! This parameter should be a positive integer >= 2 !")
             checkpoint_parameter <- FALSE
           }
         } else {
-          FSA_message("ERROR!!! Problem with CSA0032! This parameter should be a positive integer >= 2 !")
+          FSA_message("ERROR!!! Problem with CSA0033! This parameter should be a positive integer >= 2 !")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      minTanimotoCoefficient1 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0033'), 2])
+      minTanimotoCoefficient1 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0034'), 2])
       if (length(minTanimotoCoefficient1) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0033! This parameter should be a positive number between 0 - 1!")
+        FSA_message("ERROR!!! Problem with CSA0034! This parameter should be a positive number between 0 - 1!")
         checkpoint_parameter <- FALSE
       } else {
         if (minTanimotoCoefficient1 < 0 | minTanimotoCoefficient1 > 1) {
-          FSA_message("ERROR!!! Problem with CSA0033! This parameter should be a positive number between 0 - 1!")
+          FSA_message("ERROR!!! Problem with CSA0034! This parameter should be a positive number between 0 - 1!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      minTanimotoCoefficient2 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0034'), 2])
+      minTanimotoCoefficient2 <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0035'), 2])
       if (length(minTanimotoCoefficient2) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0034! This parameter should be a positive number greater than `CSA0033` and less than 1!")
+        FSA_message("ERROR!!! Problem with CSA0035! This parameter should be a positive number greater than `CSA0034` and less than 1!")
         checkpoint_parameter <- FALSE
       } else {
         if (minTanimotoCoefficient2 < minTanimotoCoefficient1 | minTanimotoCoefficient2 > 1) {
-          FSA_message("ERROR!!! Problem with CSA0034! This parameter should be a positive number greater than `CSA0033` and less than 1!")
+          FSA_message("ERROR!!! Problem with CSA0035! This parameter should be a positive number greater than `CSA0034` and less than 1!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      x0035 <- which(PARAM_CSA[, 1] == 'CSA0035')
-      CSA0035 <- PARAM_CSA[x0035, 2]
-      if (is.na(CSA0035)) {
-        FSA_message("ERROR!!! Problem with CSA0035!")
+      x0036 <- which(PARAM_CSA[, 1] == 'CSA0036')
+      CSA0036 <- PARAM_CSA[x0036, 2]
+      if (is.na(CSA0036)) {
+        FSA_message("ERROR!!! Problem with CSA0036!")
         checkpoint_parameter <- FALSE
       } else {
-        CSA0035 <- gsub(" ", "", tolower(CSA0035))
-        if (CSA0035 == "yes" | CSA0035 == "no") {
-          PARAM_CSA[x0035, 2] <- CSA0035
+        CSA0036 <- gsub(" ", "", tolower(CSA0036))
+        if (CSA0036 == "yes" | CSA0036 == "no") {
+          PARAM_CSA[x0036, 2] <- CSA0036
         } else {
-          FSA_message("ERROR!!! Problem with CSA0035!")
+          FSA_message("ERROR!!! Problem with CSA0036!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      massError <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0036'), 2])
+      massError <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0037'), 2])
       if (length(massError) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0036! This parameter should be a positive number!")
+        FSA_message("ERROR!!! Problem with CSA0037! This parameter should be a positive number!")
         checkpoint_parameter <- FALSE
       } else {
         if (massError < 0) {
-          FSA_message("ERROR!!! Problem with CSA0036! This parameter should be a positive number!")
+          FSA_message("ERROR!!! Problem with CSA0037! This parameter should be a positive number!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      x0037 <- which(PARAM_CSA[, 1] == 'CSA0037')
-      allowedWeightedSpectralEntropy <- tolower(gsub(" ", "", PARAM_CSA[x0037, 2]))
+      x0038 <- which(PARAM_CSA[, 1] == 'CSA0038')
+      allowedWeightedSpectralEntropy <- tolower(gsub(" ", "", PARAM_CSA[x0038, 2]))
       if (allowedWeightedSpectralEntropy == "1" | allowedWeightedSpectralEntropy == "t" | allowedWeightedSpectralEntropy == "true") {
         allowedWeightedSpectralEntropy <- TRUE
       } else {
         allowedWeightedSpectralEntropy <- FALSE
       }
-      PARAM_CSA[x0037, 2] <- allowedWeightedSpectralEntropy
+      PARAM_CSA[x0038, 2] <- allowedWeightedSpectralEntropy
       ##
-      minEntropySimilarity <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0038'), 2])
+      minEntropySimilarity <- as.numeric(PARAM_CSA[which(PARAM_CSA[, 1] == 'CSA0039'), 2])
       if (length(minEntropySimilarity) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0038! This parameter should be a positive number between 0 - 1!")
+        FSA_message("ERROR!!! Problem with CSA0039! This parameter should be a positive number between 0 - 1!")
         checkpoint_parameter <- FALSE
       } else {
         if (!((minEntropySimilarity >= 0) & (minEntropySimilarity <= 1))) {
-          FSA_message("ERROR!!! Problem with CSA0038! This parameter should be a positive number between 0 - 1!")
+          FSA_message("ERROR!!! Problem with CSA0039! This parameter should be a positive number between 0 - 1!")
           checkpoint_parameter <- FALSE
         }
       }
       ##
-      x0039 <- which(PARAM_CSA[, 1] == 'CSA0039')
-      if (length(x0039) == 0) {
-        FSA_message("ERROR!!! Problem with CSA0039!")
+      x0040 <- which(PARAM_CSA[, 1] == 'CSA0040')
+      if (length(x0040) == 0) {
+        FSA_message("ERROR!!! Problem with CSA0040!")
         checkpoint_parameter <- FALSE
       } else {
         ##
-        FSdb_file <- PARAM_CSA[x0039, 2]
+        FSdb_file <- PARAM_CSA[x0040, 2]
         if (!(is.na(FSdb_file) | (tolower(FSdb_file) == "na"))) {
           ##
           FSdb_file <- gsub("\\", "/", FSdb_file, fixed = TRUE)
-          PARAM_CSA[x0039, 2] <- FSdb_file
+          PARAM_CSA[x0040, 2] <- FSdb_file
           if (!file.exists(FSdb_file)) {
-            FSA_message("ERROR!!! Problem with CSA0039! Please ensure the full path is provided for the FSDB in .Rdata format OR select `NA`!")
+            FSA_message("ERROR!!! Problem with CSA0040! Please ensure the full path is provided for the FSDB in .Rdata format OR select `NA`!")
             checkpoint_parameter <- FALSE
           }
         }
